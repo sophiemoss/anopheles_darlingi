@@ -60,3 +60,5 @@ ls *.mkdup.bam | parallel --keep-order -j 60 --bar 'samtools depth -aa {} | awk 
 
 
 ## Code to look at what the coverage is of wgs data by looking at the bam file and create coverage plots across genome
+
+python /mnt/storage11/sophie/gitrepos/anopheles_darlingi/create_coverage_plots_sambamba.py
