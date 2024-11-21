@@ -15,7 +15,7 @@ import matplotlib.patches as mpatches
 import gffutils
 
 # %% set wd
-os.chdir('/mnt/storage11/sophie/bijagos_mosq_wgs/2019_melas_fq2vcf_gambiae_aligned/genomics_database_melas2019plusglobal/genomics_database_melas2019plusglobal_vcf/melas_2019_plusglobal_filtering')
+os.chdir('/mnt/storage11/sophie/darlingi/darlingi_database/phenotyped_colony')
 os.getcwd()
 
 # %%
@@ -24,7 +24,7 @@ os.getcwd()
 #allel.vcf_to_zarr('2019melasglobal_finalfiltered_gambiaealigned_phased.vcf.gz', '2019melasglobal_finalfiltered_gambiaealigned_phased.zarr', fields='*', overwrite=True)
 
 # %%
-callset = zarr.open('2019melasglobal_finalfiltered_gambiaealigned_phased.zarr', mode='r')
+callset = zarr.open('phenotyped_darlingi_filtered_phased.zarr', mode='r')
 #callset.tree(expand=True)
 
 # %%
@@ -34,42 +34,42 @@ print(gt.shape)
 
 # %%
 ## import metadata
-df_samples=pd.read_csv('metadata_melasplusglobal.csv',sep=',',usecols=['sample','country','year','species','island'])
+df_samples=pd.read_csv('/mnt/storage11/sophie/darlingi/darlingi_resistance_metadata.csv',sep=',',usecols=['sample','population','region','country','site','resistance_status'])
 df_samples.head()
-df_samples.groupby(by=['country']).count
+df_samples.groupby(by=['resistance_status']).count
 
 # %%
 ## VCF is phased so we can convert genotype arrays made earlier to haplotype array
 
 sample_ids = callset['samples'][:]
 
-# %% Create arrays needed for Cameroon samples
-# Get sample identifiers for Cameroon samples from df_samples
-cam_sample_ids = df_samples[df_samples['country'] == 'Cameroon']['sample'].values
+# %% Create arrays needed for alphacyp_res samples
+# Get sample identifiers for alphacyp_res samples from df_samples
+alphacyp_res_sample_ids = df_samples[df_samples['resistance_status'] == 'alpha-cypermethrin-resistant']['sample'].values
 # Find indices of these samples in the genotype array
-cam_indices = np.array([np.where(sample_ids == id)[0][0] for id in cam_sample_ids if id in sample_ids])
+alphacyp_res_indices = np.array([np.where(sample_ids == id)[0][0] for id in alphacyp_res_sample_ids if id in sample_ids])
 # Verify the indices are within the correct range
-print("Max index:", cam_indices.max(), "Sample array size:", len(sample_ids))
-# Select genotypes for Cameroon samples using the indices
-gt_cam_samples = gt.take(cam_indices, axis=1)
+print("Max index:", alphacyp_res_indices.max(), "Sample array size:", len(sample_ids))
+# Select genotypes for alphacyp_res samples using the indices
+gt_alphacyp_res_samples = gt.take(alphacyp_res_indices, axis=1)
 
-# %% Create arrays needed for Bijagos samples
-# Get sample identifiers for Bijagos samples from df_samples
-bij_sample_ids = df_samples[df_samples['country'] == 'Guinea-Bissau']['sample'].values
+# %% Create arrays needed for alphacyp_sus samples
+# Get sample identifiers for alphacyp_sus samples from df_samples
+alphacyp_sus_sample_ids = df_samples[df_samples['resistance_status'] == 'alpha-cypermethrin-susceptible']['sample'].values
 # Find indices of these samples in the genotype array
-bij_indices = np.array([np.where(sample_ids == id)[0][0] for id in bij_sample_ids if id in sample_ids])
+alphacyp_sus_indices = np.array([np.where(sample_ids == id)[0][0] for id in alphacyp_sus_sample_ids if id in sample_ids])
 # Verify the indices are within the correct range
-print("Max index:", bij_indices.max(), "Sample array size:", len(sample_ids))
-# Select genotypes for Cameroon samples using the indices
-gt_bij_samples = gt.take(bij_indices, axis=1)
+print("Max index:", alphacyp_sus_indices.max(), "Sample array size:", len(sample_ids))
+# Select genotypes for alphacyp_sus samples using the indices
+gt_alphacyp_sus_samples = gt.take(alphacyp_sus_indices, axis=1)
 
 # %% these are from a phased VCF so we can convert the genotype arrays to haplotype arrays
 
-h_array_cameroon = gt_cam_samples.to_haplotypes().compute()
-h_array_cameroon
+h_array_alphacyp_res = gt_alphacyp_res_samples.to_haplotypes().compute()
+h_array_alphacyp_res
 
-h_array_bijagos = gt_bij_samples.to_haplotypes().compute()
-h_array_bijagos
+h_array_alphacyp_sus = gt_alphacyp_sus_samples.to_haplotypes().compute()
+h_array_alphacyp_sus
 
 # %% we need variant positions
 pos = callset['variants/POS'][:]
@@ -77,7 +77,7 @@ chrom = callset['variants/CHROM'][:]
 
 # %% compute xpehh
 # xpehh_raw = allel.xpehh(h_sus, h_res, pos, map_pos=None, min_ehh=0.05, include_edges=False, gap_scale=20000, max_gap=20000, is_accessible=None, use_threads=True)
-xpehh_raw = allel.xpehh(h_array_bijagos, h_array_cameroon, pos, use_threads=True)
+xpehh_raw = allel.xpehh(h_array_alphacyp_sus, h_array_alphacyp_res, pos, use_threads=True)
 xpehh_raw
 
 # %% look for where the biggest signal is
@@ -110,12 +110,10 @@ ax.set_ylabel('Frequency (no. variants)');
 
 # define chromosome lengths and colours 
 chromosome_lengths = {
-    '2L': 49364325,
-    '2R': 61545105,
-    '3L': 41963435,
-    '3R': 53200684,
-    'anop_mito': 15363,
-    'anop_X': 24393108
+    '2': 94951917,
+    '3': 71270736,
+    'anop_mito': 15395,
+    'anop_X': 13401267
 }
 
 # Calculate cumulative offsets for each chromosome
@@ -128,8 +126,8 @@ for chrom, length in chromosome_lengths.items():
 # %% Plot XP-EHH
 
 # Set threshold
-bijagos_threshold = 5
-cameroon_threshold = -5
+susceptible_threshold = 5
+resistant_threshold = -5
 
 # Set up the plot
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -148,18 +146,14 @@ fig, ax = plt.subplots(figsize=(10, 6))
 
 # Define colors for each chromosome (for illustration)
 chromosome_colours = {
-    '2L': '#3d348b', '2R': '#f18701', '3L': '#f7b801', '3R': '#7678ed', 'anop_mito': '#f35b04', 'anop_X': '#119DA4'
+    '2': '#3d348b', '3': '#f7b801', 'anop_mito': '#f35b04', 'anop_X': '#119DA4'
 }
-
-# Set threshold
-bijagos_threshold = 5
-cameroon_threshold = -5
 
 # Create a list to hold the legend patches
 legend_patches = []
 
 # Filtered chromosomes list, assuming cumulative_lengths are defined for these
-filtered_chroms = ['2L', '2R', '3L', '3R', 'anop_X', 'anop_mito']
+filtered_chroms = ['2', '3', 'anop_X', 'anop_mito']
 
 # Iterate through each chromosome to plot its variants
 for unique_chrom in filtered_chroms:
@@ -175,7 +169,7 @@ for unique_chrom in filtered_chroms:
     adjusted_positions = chrom_positions_no_nan + cumulative_lengths.get(unique_chrom, 0)
 
     # Conditions for plotting
-    solid_mask = (chrom_xpehh_values_no_nan >= bijagos_threshold) | (chrom_xpehh_values_no_nan <= cameroon_threshold)
+    solid_mask = (chrom_xpehh_values_no_nan >= susceptible_threshold) | (chrom_xpehh_values_no_nan <= resistant_threshold)
     faded_mask = ~solid_mask
     
     # Plot solid points for values above 5 or below -5
@@ -193,8 +187,8 @@ for unique_chrom in filtered_chroms:
     legend_patches.append(patch)
 
 # Add significance threshold lines and legend
-ax.axhline(y=bijagos_threshold, color='black', linestyle='--', label='Bijagos Threshold')
-ax.axhline(y=cameroon_threshold, color='black', linestyle='--', label='Cameroon Threshold')
+ax.axhline(y=susceptible_threshold, color='black', linestyle='--', label='Susceptible Threshold')
+ax.axhline(y=resistant_threshold, color='black', linestyle='--', label='Resistant Threshold')
 ax.legend(handles=legend_patches, title='Chromosome', bbox_to_anchor=(1.05, 1), loc='upper left')
 
 # Set labels
@@ -205,115 +199,177 @@ plt.savefig('xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
 
 # %% list all positions with xpehh value over or below a certain threshold
 
-bijagos_threshold_mask = xpehh_standardised_values >= bijagos_threshold
-cameroon_threshold_mask = xpehh_standardised_values <= cameroon_threshold
+susceptible_threshold_mask = xpehh_standardised_values >= susceptible_threshold
+resistant_threshold_mask = xpehh_standardised_values <= resistant_threshold
 
 # %% Apply the mask to filter the data
-bij_significant_chrom = chrom[bijagos_threshold_mask]
-bij_significant_pos = pos[bijagos_threshold_mask]
-bij_significant_xpehh = xpehh_standardised_values[bijagos_threshold_mask]
+sus_significant_chrom = chrom[susceptible_threshold_mask]
+sus_significant_pos = pos[susceptible_threshold_mask]
+sus_significant_xpehh = xpehh_standardised_values[susceptible_threshold_mask]
 
-cam_significant_chrom = chrom[cameroon_threshold_mask]
-cam_significant_pos = pos[cameroon_threshold_mask]
-cam_significant_xpehh = xpehh_standardised_values[cameroon_threshold_mask]
+res_significant_chrom = chrom[resistant_threshold_mask]
+res_significant_pos = pos[resistant_threshold_mask]
+res_significant_xpehh = xpehh_standardised_values[resistant_threshold_mask]
 
 # %% Combine the filtered data into a structured array
-bij_significant_xpehh_data = np.column_stack((bij_significant_chrom, bij_significant_pos, bij_significant_xpehh))
-cam_significant_xpehh_data = np.column_stack((cam_significant_chrom, cam_significant_pos, cam_significant_xpehh))
+sus_significant_xpehh_data = np.column_stack((sus_significant_chrom, sus_significant_pos, sus_significant_xpehh))
+res_significant_xpehh_data = np.column_stack((res_significant_chrom, res_significant_pos, res_significant_xpehh))
 
 # %% Convert the structured array to a pandas DataFrame for easier handling
-df_significant_bij_xpehh = pd.DataFrame(bij_significant_xpehh_data, columns=['Chromosome', 'Position', 'XPEHH'])
-df_significant_cam_xpehh = pd.DataFrame(cam_significant_xpehh_data, columns = ['Chromosome', 'Position', 'XPEHH'])
+df_significant_sus_xpehh = pd.DataFrame(sus_significant_xpehh_data, columns=['Chromosome', 'Position', 'XPEHH'])
+df_significant_res_xpehh = pd.DataFrame(res_significant_xpehh_data, columns = ['Chromosome', 'Position', 'XPEHH'])
 
 # %% Save to csv
-df_significant_bij_xpehh.to_csv(f'df_significant_bij_xpehh_bijagos_threshold_{bijagos_threshold}.csv', index=False)
-df_significant_cam_xpehh.to_csv(f'df_significant_cam_xpehh_cameroon_threshold_{cameroon_threshold}.csv', index=False)
+df_significant_sus_xpehh.to_csv(f'df_significant_sus_xpehh_susceptible_threshold_{susceptible_threshold}.csv', index=False)
+df_significant_res_xpehh.to_csv(f'df_significant_res_xpehh_resistant_threshold_{resistant_threshold}.csv', index=False)
 
-# %% bring in the gff file to understand where each of these variants is
+
+# %% Annotate the Susceptible XPEHH file
 
 print("Using GFF file to bring in annotations for these positions")
 
-## Annotate the Bijagos XPEHH file
 # Parameters
-input_file_name = f"df_significant_bij_xpehh_bijagos_threshold_{bijagos_threshold}.csv"
-output_file_name = f"df_significant_bij_xpehh_bijagos_threshold_{bijagos_threshold}_annotated.csv"
-gff_file = '/mnt/storage11/sophie/reference_genomes/A_gam_P4_ensembl/Anopheles_gambiae.AgamP4.56.chr.gff3'
+input_file_name = f"df_significant_sus_xpehh_susceptible_threshold_{susceptible_threshold}.csv"
+output_file_name = f"df_significant_sus_xpehh_susceptible_threshold_{susceptible_threshold}_annotated.csv"
+gff_file = '/mnt/storage11/sophie/reference_genomes/An_darlingi_ncbi/GCF_943734745.1_idAnoDarlMG_H_01_genomic.gff'
 
 # Function to find and format the GFF line(s) that overlap a given position
 def find_overlapping_gff_lines(chromosome, position, gff_file):
+    chromosome_mapping = {
+        "NC_064873.1": "anop_X",
+        "NC_064874.1": "2",
+        "NC_064875.1": "3",
+        "NC_064876.1": "anop_mito"
+    }
+    reverse_mapping = {v: k for k, v in chromosome_mapping.items()}
+    gff_chromosome = reverse_mapping.get(chromosome)
+
+    if not gff_chromosome:
+        print(f"No mapping found for chromosome {chromosome}")
+        return []
+
     overlapping_lines = []
     with open(gff_file, 'r') as gff:
         for line in gff:
             if line.startswith('#') or line.strip() == "":
-                continue  # Skip header and empty lines
-            parts = line.split('\t')
-            if parts[0] == chromosome and int(parts[3]) <= position <= int(parts[4]):
-                formatted_line = ",".join(parts).strip()
-                overlapping_lines.append(formatted_line)
+                continue
+            
+            parts = line.strip().split('\t')
+            if len(parts) < 9:
+                continue
+            
+            if parts[0] == gff_chromosome:
+                start = int(parts[3])
+                end = int(parts[4])
+                if start <= position <= end:
+                    print(f"Match found: {chromosome}:{position} in {parts[0]}:{start}-{end}")
+                    annotation = parts[8]
+                    formatted_line = f"{parts[0]}:{start}-{end} | {annotation}"
+                    overlapping_lines.append(formatted_line)
+    if not overlapping_lines:
+        print(f"No overlap found for {chromosome}:{position}")
     return overlapping_lines
 
-# Open the output file to write the annotated positions
+# Writing output file
 with open(output_file_name, "w") as outfile:
     # Write the header line
-    outfile.write("Chromosome,Position,XPEHH,Gff_Annotation\n")
+    outfile.write("Chromosome\tPosition\tXPEHH Value\tGff_Annotation\n")
 
-    # Open the file containing significant iHS positions to read
     with open(input_file_name, "r") as infile:
-        next(infile) #skip header line
+        next(infile)  # Skip the header line
         for line in infile:
+            # Split the line using comma as the delimiter
             parts = line.strip().split(",")
+            if len(parts) < 3:  # Ensure the line has at least three columns
+                print(f"Skipping malformed line: {line.strip()}")
+                continue
+
             chromosome, position, XPEHH = parts[0], int(parts[1]), parts[2]
-            
-            # Find overlapping GFF lines for the position
+
+            # Find overlapping annotations in the GFF file
             overlapping_gff_lines = find_overlapping_gff_lines(chromosome, position, gff_file)
             
-            # Join all overlapping GFF lines into a single string
-            gff_annotation = "; ".join(overlapping_gff_lines)
-            
-            # Write to the output file
-            outfile.write(f"{chromosome},{position},{XPEHH},{gff_annotation}\n")
+            if overlapping_gff_lines:
+                gff_annotation = "; ".join(overlapping_gff_lines)
+            else:
+                gff_annotation = "no overlapping line found in the GFF file for this position"
 
-print(f"XP-EHH significant values identified and GFF annotations written here: {output_file_name}")
-# %%
-## Annotate the Cameroon XPEHH file
-# Parameters
-input_file_name = f"df_significant_cam_xpehh_cameroon_threshold_{cameroon_threshold}.csv"
-output_file_name = f"df_significant_cam_xpehh_cameroon_threshold_{cameroon_threshold}_annotated.csv"
-gff_file = '/mnt/storage11/sophie/reference_genomes/A_gam_P4_ensembl/Anopheles_gambiae.AgamP4.56.chr.gff3'
+            # Write the annotated result to the output file
+            outfile.write(f"{chromosome}\t{position}\t{XPEHH}\t{gff_annotation}\n")
+
+print(f"XP-EHH significant values for susceptible samples identified and GFF annotations written to: {output_file_name}")
+
+# %% Annotate the Resistant XPEHH file
+print("Using GFF file to annotate resistant XPEHH positions")
+
+input_file_name = f"df_significant_res_xpehh_resistant_threshold_{resistant_threshold}.csv"
+output_file_name = f"df_significant_res_xpehh_resistant_threshold_{resistant_threshold}_annotated.csv"
+gff_file = '/mnt/storage11/sophie/reference_genomes/An_darlingi_ncbi/GCF_943734745.1_idAnoDarlMG_H_01_genomic.gff'
 
 # Function to find and format the GFF line(s) that overlap a given position
 def find_overlapping_gff_lines(chromosome, position, gff_file):
+    chromosome_mapping = {
+        "NC_064873.1": "anop_X",
+        "NC_064874.1": "2",
+        "NC_064875.1": "3",
+        "NC_064876.1": "anop_mito"
+    }
+    reverse_mapping = {v: k for k, v in chromosome_mapping.items()}
+    gff_chromosome = reverse_mapping.get(chromosome)
+
+    if not gff_chromosome:
+        print(f"No mapping found for chromosome {chromosome}")
+        return []
+
     overlapping_lines = []
     with open(gff_file, 'r') as gff:
         for line in gff:
             if line.startswith('#') or line.strip() == "":
-                continue  # Skip header and empty lines
-            parts = line.split('\t')
-            if parts[0] == chromosome and int(parts[3]) <= position <= int(parts[4]):
-                formatted_line = ",".join(parts).strip()
-                overlapping_lines.append(formatted_line)
+                continue
+            
+            parts = line.strip().split('\t')
+            if len(parts) < 9:
+                continue
+            
+            if parts[0] == gff_chromosome:
+                start = int(parts[3])
+                end = int(parts[4])
+                if start <= position <= end:
+                    print(f"Match found: {chromosome}:{position} in {parts[0]}:{start}-{end}")
+                    annotation = parts[8]
+                    formatted_line = f"{parts[0]}:{start}-{end} | {annotation}"
+                    overlapping_lines.append(formatted_line)
+    if not overlapping_lines:
+        print(f"No overlap found for {chromosome}:{position}")
     return overlapping_lines
 
-# Open the output file to write the annotated positions
+# Writing output file
 with open(output_file_name, "w") as outfile:
     # Write the header line
-    outfile.write("Chromosome,Position,XPEHH,Gff_Annotation\n")
+    outfile.write("Chromosome\tPosition\tXPEHH Value\tGff_Annotation\n")
 
-    # Open the file containing significant iHS positions to read
     with open(input_file_name, "r") as infile:
-        next(infile) #skip header line
+        next(infile)  # Skip the header line
         for line in infile:
+            # Split the line using comma as the delimiter
             parts = line.strip().split(",")
+            if len(parts) < 3:  # Ensure the line has at least three columns
+                print(f"Skipping malformed line: {line.strip()}")
+                continue
+
             chromosome, position, XPEHH = parts[0], int(parts[1]), parts[2]
-            
-            # Find overlapping GFF lines for the position
+
+            # Find overlapping annotations in the GFF file
             overlapping_gff_lines = find_overlapping_gff_lines(chromosome, position, gff_file)
             
-            # Join all overlapping GFF lines into a single string
-            gff_annotation = "; ".join(overlapping_gff_lines)
-            
-            # Write to the output file
-            outfile.write(f"{chromosome},{position},{XPEHH},{gff_annotation}\n")
+            if overlapping_gff_lines:
+                gff_annotation = "; ".join(overlapping_gff_lines)
+            else:
+                gff_annotation = "no overlapping line found in the GFF file for this position"
 
-print(f"XP-EHH significant values identified and GFF annotations written here: {output_file_name}")
+            # Write the annotated result to the output file
+            outfile.write(f"{chromosome}\t{position}\t{XPEHH}\t{gff_annotation}\n")
+
+print(f"XP-EHH significant values for resistant samples identified and GFF annotations written to: {output_file_name}")
+
 # %%
