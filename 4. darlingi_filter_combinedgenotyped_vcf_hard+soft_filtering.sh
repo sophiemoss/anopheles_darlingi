@@ -1,4 +1,5 @@
 # FILTERING OF COMBINED GENOTYPED VCF
+##### FILTERING OF HOLLY WGS PAPER SAMPLES
 # same filters used for both gambiae pipeline and melas pipeline
 
 ########### FILTER 1: remove INDELS with bcftools, here -M2 indicates that bcftools should split multi-allelic sites into multiple biallelic sites, 
@@ -13,63 +14,34 @@ bcftools view -M2 -m2 -v snps darlingi.genotyped.vcf.gz -Oz -o bi_snps_darlingi.
 # bgzip bi_snps_gambiae_nov2022.2023_07_05.genotyped.vcf
 
 # tabix index the compressed VCF file, creates .vcf.gz.tbi
-<<<<<<< HEAD
 tabix -f -p vcf bi_snps_darlingi.genotyped.vcf.gz
-=======
-tabix -p vcf bi_snps_darlingi.genotyped.vcf.gz
->>>>>>> f8c51efd10301e073b401f1898b65dc7df58513f
 
 # rename chromosomes
 # create chr_map.txt with two columns, original chr name in first column and new chr name in second column
 bcftools annotate --rename-chrs chr_map.txt bi_snps_darlingi.genotyped.vcf.gz -Oz -o renamedchr_bi_snps_darlingi.genotyped.vcf.gz
-<<<<<<< HEAD
 
-tabix -f -p vcf renamedchr_bi_snps_darlingi.genotyped.vcf.gz
-
-# filter out the contigs from the VCF file, note that to produce a properly bgzipped vcf file you need the -Oz flag
-bcftools view renamedchr_bi_snps_darlingi.genotyped.vcf.gz --regions anop_X,2,3,anop_mito | bcftools sort -Oz -o filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-=======
 tabix -p vcf renamedchr_bi_snps_darlingi.genotyped.vcf.gz
 
 # filter out the contigs from the VCF file, note that to produce a properly bgzipped vcf file you need the -Oz flag
-bcftools view renamedchr_bi_snps_darlingi.genotyped.vcf.gz --regions X,2,3,Mt | bcftools sort -Oz -o filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
->>>>>>> f8c51efd10301e073b401f1898b65dc7df58513f
+bcftools view renamedchr_bi_snps_darlingi.genotyped.vcf.gz --regions anop_X,2,3,anop_mito | bcftools sort -Oz -o filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
 
 # view the unique chromosome names
 bcftools query -f '%CHROM\n' filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | sort | uniq > unique_chromosomes_filtered.txt
 
-<<<<<<< HEAD
-tabix -f -p vcf filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
+tabix -p vcf filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
 
 ########### FILTER 2: Filter samples to keep those with 40% of genome with > 10x coverage, and min-ac=1 so that all variants that remain are still variants after sample removal
-# I am keeping all samples so only filtering on min-ac = 1
+# Holly WGS paper samples, keeping those with average coverage over 5.
 
 # create file with samples to keep: sample_to_keep.txt
 
 bcftools view -S samples_to_keep.txt filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz --min-ac=1 -Oz -o minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
 
-tabix -f -p vcf minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-
-## count variants 
-## darlingi = 15306662
-# bcftools view -H minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
-
-=======
-tabix -p vcf filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-
-########### FILTER 2: Filter samples to keep those with 40% of genome with > 10x coverage, and min-ac=1 so that all variants that remain are still variants after sample removal
-# I am keeping all samples so only filtering on min-ac = 1
-
-# create file with samples to keep: sample_40_10.txt
-
-bcftools view -S samples_to_keep.txt filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz --min-ac=1 -Oz -o minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-
 tabix -p vcf minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
 
-## count variants 
-## darlingi = 15306662
-bcftools view -H minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
->>>>>>> f8c51efd10301e073b401f1898b65dc7df58513f
+## holly_wgs_paper_darlingi_variants = 14186231
+# bcftools view -H minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
+
 
 ########### FILTER 3: for GATK standard filtering
 # GATK filter recommendations: https://gatk.broadinstitute.org/hc/en-us/articles/360035890471-Hard-filtering-germline-short-variants
@@ -94,16 +66,9 @@ gatk VariantFiltration \
 
 ## remove the SNPs that have been tagged with the above filters
 bcftools view -f 'PASS' gatk_tagged_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz -Oz -o gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-<<<<<<< HEAD
 
-## count variants, darlingi: 14633638
-#bcftools view -H gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
-=======
-
-## count variants, darlingi: 14633638
-bcftools view -H gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
-
->>>>>>> f8c51efd10301e073b401f1898b65dc7df58513f
+## holly_wgs_paper_darlingi_variants = 13730595
+# bcftools view -H gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
 
 ## ADDITIONAL SOFT FILTERING
 
@@ -123,69 +88,38 @@ bcftools view -H gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.v
 bcftools filter -S . -e 'FMT/DP<5 | FMT/GQ<20' -O z -o DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
 
 ## check this, the genotype here should have been set to missing ./. as we are filtering for depth below 5
-<<<<<<< HEAD
 #bcftools query -i 'FMT/DP<5' -f '[GT=%GT\tDP=%DP\tGQ=%GQ\t]\n' DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | less -S
-
-## happy? index vcf
-tabix -f -p vcf DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-
-## count variants, darlingi: 14633638. Same number as all are filters above just set to missing, so genotypes removed but site still in VCF.
-#bcftools view -H DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
-=======
-bcftools query -i 'FMT/DP<5' -f '[GT=%GT\tDP=%DP\tGQ=%GQ\t]\n' DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | less -S
 
 ## happy? index vcf
 tabix -p vcf DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
 
-## count variants, darlingi: 14633638. Same number as all are filters above just set to missing, so genotypes removed but site still in VCF.
-bcftools view -H DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
->>>>>>> f8c51efd10301e073b401f1898b65dc7df58513f
+## holly_wgs_paper_darlingi_variants: 13730595. Same number as all our filters above just set to missing, so genotypes removed but site still in VCF.
+# bcftools view -H DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
 
 ########### FILTER 5: exclude -e all sites at which no alternative alleles are called for any of the samples
 bcftools filter -e 'AC==0' DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz -O z -o AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
 
-<<<<<<< HEAD
-tabix -f -p vcf AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-
-## count variants, darlingi: 13570672
-#bcftools view -H AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
-
-########### FILTER 6 ##########
-=======
 tabix -p vcf AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
 
-## count variants, darlingi
-bcftools view -H AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
->>>>>>> f8c51efd10301e073b401f1898b65dc7df58513f
+## holly_wgs_paper_darlingi_variants: 12510546
+# bcftools view -H AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
+
+########### FILTER 6 ##########
 
 ## Remove variants with a high amount of missing genotypes and filter on minor allele frequency
 ## The data set overall will now have lots of missing data, because we have replaced calls with depth <5 or quality below 20 with ./.  
 ## Therefore we will now remove all variants that have more than 20% missing genotypes or MAF < 0.01
-## Filtering for MAF 0.02 means that remaining sites in the VCF need to have a minimum minor allele frequency of 2%
-## This dataset includes  individuals (thus maximally 88 alleles per site). 
-## If we filter for MAF 0.02, a variant is excluded if its minor allele is found in less than 0.88 genotypes (1% of 88). 
-## This would remove alleles where the minor allele occurs 0.88 times or less, which for this particular dataset means a 
-## variant would be removed if there are no minor alleles? So if there is no alternate allele the variant is removed.
+## Filtering for MAF < 0.01 means that remaining sites in the VCF need to have a minimum minor allele frequency of 1%
 
-<<<<<<< HEAD
-bcftools filter -e 'F_MISSING > 0.2 || MAF <= 0.02' -O z -o F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-
-# check this has worked. The minor allele count should be 1 or above in this dataset.
-#bcftools query F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz -f'%AC\n' | sort -g | head
-
-# count variants, darlingi: 4575687
-bcftools view -H F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
-tabix -f -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-=======
 bcftools filter -e 'F_MISSING > 0.2 || MAF <= 0.01' -O z -o F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
 
 # check this has worked. The minor allele count should be 1 or above in this dataset.
-bcftools query F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz -f'%AC\n' | sort -g | head
+# bcftools query F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz -f'%AC\n' | sort -g | head
 
-# count variants, darlingi: 13570672
-bcftools view -H F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
-tabix -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
->>>>>>> f8c51efd10301e073b401f1898b65dc7df58513f
+bcftools query F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz -f'%AC\n' | sort -g | head
+
+# final SNPs: 
+
 
 # Filtering complete!
 
@@ -196,36 +130,27 @@ tabix -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_sn
 # could also use phasing pipeline from malariagen. Have a look at this, and understand gatk parameters above.
 
 # use beagle conda environment. mamba install beagle.
-<<<<<<< HEAD
 beagle -Xmx500g gt=F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz out=darlingi_filtered_phased
-=======
-beagle -Xmx500g gt=F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz out=darlingi_filtered_phased.vcf.gz
-
-tabix -p vcf darlingi_filtered_phased.vcf.gz
->>>>>>> f8c51efd10301e073b401f1898b65dc7df58513f
 
 tabix -f -p vcf darlingi_filtered_phased.vcf.gz
 
-<<<<<<< HEAD
 ## Check the number of SNPs in the phased file, it should be the same.
 
-# unphased darlingi, chromosome 3: 1951206
+# unphased darlingi, chromosome 3: 31996
 bcftools query -f '%CHROM\t%POS\n' F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | awk '$1=="3"' | wc -l
-# phased darlingi, chromosome 3: 1951206
+# phased darlingi, chromosome 3: 31996
 bcftools query -f '%CHROM\t%POS\n' darlingi_filtered_phased.vcf.gz | awk '$1=="3"' | wc -l
 
-=======
-# unphased darlingi: 1918369
-bcftools query -f '%CHROM\t%POS\n' F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | awk '$1=="2"' | wc -l
-# phased darlingi: 1918369
-bcftools query -f '%CHROM\t%POS\n' darlingi_filtered_phased.vcf.gz | awk '$1=="2"' | wc -l
->>>>>>> f8c51efd10301e073b401f1898b65dc7df58513f
 
 ## SnpEff annotation of filtered VCF (this one was unphased, could do either)
 snpEff Anopheles_darlingi F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz > F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf
 bgzip F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf
-<<<<<<< HEAD
-tabix -f -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf.gz
+tabix -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf.gz
+
+
+
+
+
 
 ###########################################################################################################
 ############################### Phenotyped Only Samples VCF and Filtering #################################
@@ -279,9 +204,14 @@ bcftools query -f '%CHROM\t%POS\n' phenotyped_darlingi_filtered_phased.vcf.gz | 
 snpEff Anopheles_darlingi F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.vcf.gz > F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.ann.vcf
 bgzip F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.ann.vcf
 tabix -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.ann.vcf.gz
-=======
-tabix -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf.gz
 
-## deciced to retrospectively remove three samples with poor coverage. AnDar_695, AnDar_740 and AnDar_750.
 
->>>>>>> f8c51efd10301e073b401f1898b65dc7df58513f
+## Quick flter to just keep the samples that Holly used in her WGS paper
+# min-ac=1 so that all variants that remain are still variants after sample removal
+
+bcftools view -S samples_to_keep.txt F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz --min-ac=1 -Oz -o holly_paper_samples_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
+
+tabix -p vcf holly_paper_samples_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
+bcftools view -H holly_paper_samples_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
+
+bcftools filter -e 'F_MISSING > 0.2 || MAF <= 0.02' -O z -o F6_holly_paper_samples_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz holly_paper_samples_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
