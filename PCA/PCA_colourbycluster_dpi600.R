@@ -8,9 +8,9 @@ showtext_auto()
 library(viridis)
 library(scales)
 
-workdir <- "/mnt/storage11/sophie/darlingi/darlingi_database" # Working directory with plink files
-prefix <- "mito_only_darlingi" # Prefix for plink files
-metadata <- "/mnt/storage11/sophie/darlingi/darlingi_metadata.csv" # File path to metadata
+workdir <- "/mnt/storage11/sophie/darlingi/holly_wgs_paper/pca" # Working directory with plink files
+prefix <- "X_only_darlingi" # Prefix for plink files
+metadata <- "/mnt/storage11/sophie/darlingi/holly_wgs_paper_metadatav2.csv" # File path to metadata
 
 calc_variance_explained <- function(pc_points) {
     vars <- round(pc_points$eig / sum(pc_points$eig) * 100, 1)
@@ -43,33 +43,32 @@ df <- as.data.frame(cmd$points, stringsAsFactors = FALSE)
 df$sample <- rownames(df)  # Set rownames as the 'sample' column
 
 # Add metadata columns
-#df$sample <- gsub("_", " ", desc$sample)
 df$population <- gsub("_", " ", desc$population)
 
-# Correctly reorder the dataframe to make 'sample' the first column
-#df <- df[, c("sample", setdiff(names(df), "sample"))]
-
-# Rename PCA columns to start with 'PC', if they start with 'V' 
-# (assuming all PCA columns currently start with 'V', adjust if different)
-names(df) <- gsub("^V", "PC", names(df))
+# Rename PCA columns to start with 'PC' if they start with 'V'
+colnames(df) <- gsub("^V", "PC", colnames(df))
 
 color_by <- "population" # specify if colored by region or country
 
 ## changing colour scheme to be with viridis, with color_by being a discrete variable
 
-my_colours <- c("Rondonia State" = "#FFD23F", "Colony old" = "#EE4266", 
-                "colony new" = "#3BCEAC")
+my_colours <- c("Rondonia State" = "#7678ed", "Colony old" = "darkorange2")
 
 # plot
-png("darlingi_MAF_0.02_mito_only_PCA_coloured_by_cluster.png") 
+png("X_only_PCA_coloured_by_population_dpi_600.png", width = 7000, height = 7000, res = 600) 
 ggplot(data = df, aes(x = PC1, y = PC2, color = !!sym(color_by))) +
-    geom_point(size = 3) +
-    labs(x = paste0("PC1", " (", vars["PC1"], "%)"), y = paste0("PC2", " (", vars["PC2"], "%)"), title = "Mitochondrial genome") +
-    scale_color_manual(values = my_colours) +
+    geom_point(size = 5) +
+    labs(x = paste0("PC1", " (", vars["PC1"], "%)"), y = paste0("PC2", " (", vars["PC2"], "%)"), title = "Chromosome X", color = "Population") +
+    scale_color_manual(values = my_colours, labels = c("Rondonia_State" = "Rondonia State", "Colony_old" = "Colony")) +
     scale_x_continuous(labels = label_number()) +
     scale_y_continuous(labels = label_number()) +
-    theme_classic() +
-    theme(legend.position = "bottom", legend.direction = "vertical", plot.title = element_text(hjust = 0.5),
-    plot.margin = margin(t = 10, r = 40, b = 30, l = 10, unit = "pt"))
+    theme_classic(base_size = 120) +
+    theme(legend.position = "bottom", 
+    legend.direction = "horizontal", 
+    plot.title = element_text(hjust = 0.5),
+    plot.margin = margin(t = 10, r = 40, b = 30, l = 10, unit = "pt"),
+    legend.text = element_text(size = 120),
+    axis.line = element_line(size = 0.5),
+    axis.ticks = element_line(size = 0.5))
 dev.off()
 #

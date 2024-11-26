@@ -132,7 +132,7 @@ bcftools query F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_
 # use beagle conda environment. mamba install beagle.
 beagle -Xmx500g gt=F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz out=darlingi_filtered_phased
 
-tabix -f -p vcf darlingi_filtered_phased.vcf.gz
+tabix -p vcf darlingi_filtered_phased.vcf.gz
 
 ## Check the number of SNPs in the phased file, it should be the same.
 
@@ -146,10 +146,6 @@ bcftools query -f '%CHROM\t%POS\n' darlingi_filtered_phased.vcf.gz | awk '$1=="3
 snpEff Anopheles_darlingi F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz > F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf
 bgzip F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf
 tabix -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf.gz
-
-
-
-
 
 
 ###########################################################################################################

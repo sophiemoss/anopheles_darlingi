@@ -69,7 +69,7 @@ label_region <- opt$label_region
 label_site <- opt$label_site
 met_cols <- c(label_id, label_region, label_country, label_site)
 
-pals <- c("#3d348b", "#7678ed", "#f18701", "#f7b801","#f35b04")
+pals <- c("#7678ed", "darkorange2", "#f18701", "#f7b801","#f35b04")
 
 ## ggplot fun to plot admix-like plots
 plot_gg_admix <- function(df, label_id, label_cat, type, palette, l_angle) {
