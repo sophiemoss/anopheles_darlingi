@@ -23,7 +23,7 @@ os.getcwd()
 # %%
 # convert phased, filtered, VCF file to zarr file
 # already converted to zarr
-allel.vcf_to_zarr('colonyold_darlingi_filtered_phased.vcf.gz', 'colonyold_darlingi_filtered_phased.zarr', fields='*', overwrite=True)
+# allel.vcf_to_zarr('colonyold_darlingi_filtered_phased.vcf.gz', 'colonyold_darlingi_filtered_phased.zarr', fields='*', overwrite=True)
 
 # %%
 callset = zarr.open('/mnt/storage11/sophie/darlingi/holly_wgs_paper/colonyold_darlingi_filtered_phased.zarr', mode='r')
@@ -38,50 +38,50 @@ print(gt.shape)
 ## import metadata
 df_samples=pd.read_csv('/mnt/storage11/sophie/darlingi/holly_wgs_paper_metadatav2.csv',sep=',',usecols=['sample','population'])
 df_samples.head()
-df_samples.groupby(by=['country']).count
+df_samples.groupby(by=['population']).count
 
 # %%
 ## alpha-cypermethrin-resistant samples
 
 sample_ids = callset['samples'][:]
 # Get sample identifiers for Cameroon samples from df_samples
-alphacyp_sus_sample_ids = df_samples[df_samples['resistance_status'] == 'alpha-cypermethrin-susceptible']['sample'].values
+rondonia_sample_ids = df_samples[df_samples['population'] == 'Rondonia_State']['sample'].values
 # Find indices of these samples in the genotype array
-alphacyp_sus_indices = np.array([np.where(sample_ids == id)[0][0] for id in alphacyp_sus_sample_ids if id in sample_ids])
+rondonia_indices = np.array([np.where(sample_ids == id)[0][0] for id in rondonia_sample_ids if id in sample_ids])
 # Verify the indices are within the correct range
-print("Max index:", alphacyp_sus_indices.max(), "Sample array size:", len(sample_ids))
+print("Max index:", rondonia_indices.max(), "Sample array size:", len(sample_ids))
 # Select genotypes for Cameroon samples using the indices
-gt_alphacyp_sus_samples = gt.take(alphacyp_sus_indices, axis=1)
-gt_alphacyp_sus_samples
+gt_rondonia_samples = gt.take(rondonia_indices, axis=1)
+gt_rondonia_samples
 
 # %%
 ## select variants that are segregating within gb_samples as only these will be informative
 ## also some selection tests don't support multiallelic variants, so just keep biallelics
 ## for this pipeline the VCF is already filtered so should be no biallelic SNPs anyway
 
-ac_alphacyp_sus = gt_alphacyp_sus_samples.count_alleles(max_allele=3).compute()
-alphacyp_sus_seg_variants = ac_alphacyp_sus.is_segregating() & ac_alphacyp_sus.is_biallelic_01()
-ac_alphacyp_sus_seg = ac_alphacyp_sus.compress(alphacyp_sus_seg_variants, axis=0)
-gt_alphacyp_sus_seg = gt_alphacyp_sus_samples.compress(alphacyp_sus_seg_variants, axis = 0)
-gt_alphacyp_sus_seg
+ac_rondonia = gt_rondonia_samples.count_alleles(max_allele=3).compute()
+rondonia_seg_variants = ac_rondonia.is_segregating() & ac_rondonia.is_biallelic_01()
+ac_rondonia_seg = ac_rondonia.compress(rondonia_seg_variants, axis=0)
+gt_rondonia_seg = gt_rondonia_samples.compress(rondonia_seg_variants, axis = 0)
+gt_rondonia_seg
 
 # %%
 ## this is from a phased VCF so we can convert this genotype array to haplotype array
 
-h_alphacyp_sus_seg = gt_alphacyp_sus_seg.to_haplotypes().compute()
-h_alphacyp_sus_seg
+h_rondonia_seg = gt_rondonia_seg.to_haplotypes().compute()
+h_rondonia_seg
 
 # %%
 # we need variant positions
 pos = callset['variants/POS'][:]
-pos_alphacyp_sus_seg = pos.compress(alphacyp_sus_seg_variants, axis=0)
-pos_alphacyp_sus_seg
+pos_rondonia_seg = pos.compress(rondonia_seg_variants, axis=0)
+pos_rondonia_seg
 
 # %%
 # some variants in 1000 genomes project have multiple variants at the same genomic position, 
 # which causes problems for some selection tests in scikit-allel. 
 # Let's check if there any of these.
-count_multiple_variants = np.count_nonzero(np.diff(pos_alphacyp_sus_seg == 0))
+count_multiple_variants = np.count_nonzero(np.diff(pos_rondonia_seg == 0))
 
 if count_multiple_variants == 0:
     print("No cases where there are multiple variants at the same genomic position, script will continue")
@@ -92,8 +92,8 @@ else:
 # %%
 # compute raw iHS
 
-ihs_alphacyp_sus_raw = allel.ihs(h_alphacyp_sus_seg, pos_alphacyp_sus_seg, use_threads=True, include_edges=True)
-ihs_alphacyp_sus_raw
+ihs_rondonia_raw = allel.ihs(h_rondonia_seg, pos_rondonia_seg, use_threads=True, include_edges=True)
+ihs_rondonia_raw
 print("Raw iHS computed")
 
 # %%
@@ -105,14 +105,14 @@ from datetime import datetime
 # %% view raw iHS values as a histogram
 # ~np.isnan(ihs_gb_std[0]) is used to filter out NaN values
 fig, ax = plt.subplots()
-ax.hist(ihs_alphacyp_sus_raw[~np.isnan(ihs_alphacyp_sus_raw)], bins=20)
+ax.hist(ihs_rondonia_raw[~np.isnan(ihs_rondonia_raw)], bins=20)
 ax.set_xlabel('Raw IHS')
 ax.set_ylabel('Frequency (no. variants)');
 
 # %% Standardize iHS
 
-ihs_alphacyp_sus_std = allel.standardize_by_allele_count(ihs_alphacyp_sus_raw, ac_alphacyp_sus_seg[:, 1])
-ihs_alphacyp_sus_std
+ihs_rondonia_std = allel.standardize_by_allele_count(ihs_rondonia_raw, ac_rondonia_seg[:, 1])
+ihs_rondonia_std
 print("Standardized iHS computed")
 
 # %% 
@@ -120,7 +120,7 @@ print("Standardized iHS computed")
 # Here we deviate from the Jupyter notebook and use ihs_res_std[0]
 # ~np.isnan(ihs_gb_std[0]) is used to filter out NaN values
 fig, ax = plt.subplots()
-ax.hist(ihs_alphacyp_sus_std[0][~np.isnan(ihs_alphacyp_sus_std[0])], bins=20)
+ax.hist(ihs_rondonia_std[0][~np.isnan(ihs_rondonia_std[0])], bins=20)
 ax.set_xlabel('Standardised IHS')
 ax.set_ylabel('Frequency (no. variants)');
 
@@ -140,7 +140,7 @@ plt.show()
 # direction of selection, which the sign of iHS could indicate
 
 fig, ax = plt.subplots(figsize=(10, 3))
-ax.plot(pos_alphacyp_sus_seg, np.abs(ihs_alphacyp_sus_std[0]), linestyle=' ', marker='o', mfc='none', mew=.5, mec='k')
+ax.plot(pos_rondonia_seg, np.abs(ihs_rondonia_std[0]), linestyle=' ', marker='o', mfc='none', mew=.5, mec='k')
 ax.set_xlabel('Genomic position (bp) chromosome agnostic')
 ax.set_ylabel('$|IHS|$')
 ax.set_ylim(-2, 9);
@@ -153,24 +153,24 @@ plt.savefig(filename)
 print("iHS plotted")
 
 # %% find the index of the variant with the highest iHS value
-idx_hit_max = np.nanargmax(ihs_alphacyp_sus_std[0])
+idx_hit_max = np.nanargmax(ihs_rondonia_std[0])
 
 # %% genomic position of top hit
-pos_alphacyp_sus_seg[idx_hit_max]
-print(f'Genomic position with highest iHS value (chr agnostic):', pos_alphacyp_sus_seg[idx_hit_max])
+pos_rondonia_seg[idx_hit_max]
+print(f'Genomic position with highest iHS value (chr agnostic):', pos_rondonia_seg[idx_hit_max])
 
 # %% Visualise EHH decay around top hit with a Voight plot
 # pull out haplotypes for region around top hit
 flank_size = 2000
-h_hit = h_alphacyp_sus_seg[idx_hit_max - flank_size:idx_hit_max + flank_size + 1]
+h_hit = h_rondonia_seg[idx_hit_max - flank_size:idx_hit_max + flank_size + 1]
 h_hit
 
 # %%
-fig = allel.fig_voight_painting(h_hit[:, h_alphacyp_sus_seg[idx_hit_max] == 0], index=flank_size, height_factor=0.02)
+fig = allel.fig_voight_painting(h_hit[:, h_rondonia_seg[idx_hit_max] == 0], index=flank_size, height_factor=0.02)
 fig.suptitle('Reference allele', y=1);
 
 # %% 
-fig = allel.fig_voight_painting(h_hit[:, h_alphacyp_sus_seg[idx_hit_max] == 1], index=flank_size, height_factor=0.02)
+fig = allel.fig_voight_painting(h_hit[:, h_rondonia_seg[idx_hit_max] == 1], index=flank_size, height_factor=0.02)
 fig.suptitle('Alternate allele', y=1);
 
 print("EHH decay computed")
@@ -179,12 +179,12 @@ print("EHH decay computed")
 
 # get chromosomes
 chromosomes = callset['variants/CHROM'][:]
-chrom_alphacyp_sus_seg = chromosomes.compress(alphacyp_sus_seg_variants, axis = 0)
-chrom_alphacyp_sus_seg
+chrom_rondonia_seg = chromosomes.compress(rondonia_seg_variants, axis = 0)
+chrom_rondonia_seg
 # get positions
 pos = callset['variants/POS'][:]
-pos_alphacyp_sus_seg = pos.compress(alphacyp_sus_seg_variants, axis=0)
-pos_alphacyp_sus_seg
+pos_rondonia_seg = pos.compress(rondonia_seg_variants, axis=0)
+pos_rondonia_seg
 
 
 # %% define chromosome lengths and colours 
@@ -221,16 +221,16 @@ chromosome_colours = {
 legend_patches=[]
 
 # Filter out 'Y_unplaced' or any other chromosomes not in your chromosome_lengths dictionary
-filtered_chroms = [chrom for chrom in sorted(set(chrom_alphacyp_sus_seg)) if chrom in chromosome_lengths]
+filtered_chroms = [chrom for chrom in sorted(set(chrom_rondonia_seg)) if chrom in chromosome_lengths]
 
 # Iterate through each chromosome to plot its variants
 for chrom in filtered_chroms:
     # Create mask for the current chromosome
-    mask = chrom_alphacyp_sus_seg == chrom
+    mask = chrom_rondonia_seg == chrom
     
     # Apply the chromosome mask and filter out NaN values simultaneously
-    chrom_positions = pos_alphacyp_sus_seg[mask]
-    chrom_ihs_values = ihs_alphacyp_sus_std[0][mask]
+    chrom_positions = pos_rondonia_seg[mask]
+    chrom_ihs_values = ihs_rondonia_std[0][mask]
     non_nan_mask = ~np.isnan(chrom_ihs_values)
     
     # Make sure to apply the non-NaN mask to both the positions and iHS values
@@ -266,11 +266,11 @@ plt.show()
 print("iHS plotted with all chromosomes")
 
 # %% Remove NaN iHS values, and use the same mask to filter pos and chrom.
-ihs_vals = ihs_alphacyp_sus_std[0] # the standardised ihs values are saved in ihs_gb_std[0]
+ihs_vals = ihs_rondonia_std[0] # the standardised ihs values are saved in ihs_gb_std[0]
 mask_non_nan = ~np.isnan(ihs_vals) #remove the ihs_gb_std nan values
 ihs_vals_withoutnan = ihs_vals[mask_non_nan] # save these values as vals_withoutnan
-pos_withoutnan = pos_alphacyp_sus_seg[mask_non_nan] # use the same mask to get the corresponding positions of vals_withoutnan
-chrom_withoutnan = chrom_alphacyp_sus_seg[mask_non_nan] # use the same mask to get the corresponding chromosomes of vals_withoutnan
+pos_withoutnan = pos_rondonia_seg[mask_non_nan] # use the same mask to get the corresponding positions of vals_withoutnan
+chrom_withoutnan = chrom_rondonia_seg[mask_non_nan] # use the same mask to get the corresponding chromosomes of vals_withoutnan
 print("Filtered out NaN values")
 
 # %% Sort these by putting them in ascending order, ready for the calculate_empirical_p_value function
@@ -388,7 +388,7 @@ print("iHS p-values above threshold identified")
 
 ## Save positions and corresponding iHS values above the threshold to a text file
 
-with open(f"Alphacyp_susceptible_significant_iHS_threshold_{threshold}.txt", "w") as file:
+with open(f"Rondonia_significant_iHS_threshold_{threshold}.txt", "w") as file:
     for chrom, position, ihs_value in zip(significant_ihs_chromosomes, significant_ihs_positions, significant_ihs_values):
         file.write(f"{chrom}\t{position}\t{ihs_value}\n")
 
@@ -396,8 +396,8 @@ with open(f"Alphacyp_susceptible_significant_iHS_threshold_{threshold}.txt", "w"
 
 print("Using GFF file to bring in annotations for these positions")
 
-input_file_name = f"Alphacyp_susceptible_significant_iHS_threshold_{threshold}.txt"
-output_file_name = f"Alphacyp_susceptible_significant_iHS_threshold_{threshold}_GFF_annotated.txt"
+input_file_name = f"Rondonia_significant_iHS_threshold_{threshold}.txt"
+output_file_name = f"Rondonia_significant_iHS_threshold_{threshold}_GFF_annotated.txt"
 gff_file = '/mnt/storage11/sophie/reference_genomes/An_darlingi_ncbi/GCF_943734745.1_idAnoDarlMG_H_01_genomic.gff'
 
 # Function to find and format the GFF line(s) that overlap a given position
