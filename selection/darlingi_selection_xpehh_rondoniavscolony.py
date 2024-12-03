@@ -24,7 +24,7 @@ os.getcwd()
 #allel.vcf_to_zarr('2019melasglobal_finalfiltered_gambiaealigned_phased.vcf.gz', '2019melasglobal_finalfiltered_gambiaealigned_phased.zarr', fields='*', overwrite=True)
 
 # %%
-callset = zarr.open('colonyold_darlingi_filtered_phased.zarr', mode='r')
+callset = zarr.open('holly_wgs_samples_darlingi_filtered_phased.zarr', mode='r')
 #callset.tree(expand=True)
 
 # %%

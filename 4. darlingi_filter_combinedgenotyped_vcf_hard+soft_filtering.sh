@@ -143,7 +143,7 @@ bcftools query -f '%CHROM\t%POS\n' darlingi_filtered_phased.vcf.gz | awk '$1=="3
 
 
 ## SnpEff annotation of filtered VCF (this one was unphased, could do either)
-snpEff Anopheles_darlingi F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz > F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf
+snpEff Anopheles_darlingi_2 renamedchr_F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz > renamedchr_F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf
 bgzip F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf
 tabix -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf.gz
 

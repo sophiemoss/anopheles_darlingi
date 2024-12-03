@@ -23,10 +23,10 @@ os.getcwd()
 # %%
 # convert phased, filtered, VCF file to zarr file
 # already converted to zarr
-allel.vcf_to_zarr('colonyold_darlingi_filtered_phased.vcf.gz', 'colonyold_darlingi_filtered_phased.zarr', fields='*', overwrite=True)
+allel.vcf_to_zarr('holly_wgs_samples_darlingi_filtered_phased.vcf.gz', 'holly_wgs_samples_darlingi_filtered_phased.zarr', fields='*', overwrite=True)
 
 # %%
-callset = zarr.open('/mnt/storage11/sophie/darlingi/holly_wgs_paper/colonyold_darlingi_filtered_phased.zarr', mode='r')
+callset = zarr.open('holly_wgs_samples_darlingi_filtered_phased.zarr', mode='r')
 #callset.tree(expand=True)
 
 # %%
