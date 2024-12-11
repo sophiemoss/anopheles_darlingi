@@ -7,6 +7,6 @@
 # download and view the alignment in aliview, and align
 
 # Both types of tree
-raxml-ng --all --msa darlingi_mito_consensus_sequences_aligned.fasta --model GTR --prefix Anopheles_darlingi --seed 706046 --bs-metric tbe --tree rand{1} --bs-trees 1000
+raxml-ng --all --msa darlingi_allsamples_consensus_mito.aligned.fasta --model GTR --prefix Anopheles_darlingi --seed 729264 --bs-metric tbe --tree rand{1} --bs-trees 1000
 
 # Use best_tree for iTOL

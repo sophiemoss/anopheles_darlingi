@@ -21,10 +21,10 @@ import sys
 from datetime import datetime
 
 # %%
-working_directory = '/mnt/storage11/sophie/bijagos_mosq_wgs/2019_melas_fq2vcf_gambiae_aligned/genomics_database_melas2019plusglobal/genomics_database_melas2019plusglobal_vcf/melas_2019_plusglobal_filtering'
+working_directory = '/mnt/storage11/sophie/darlingi/holly_wgs_paper'
 os.chdir(working_directory)
-callset_file = '2019melasglobal_finalfiltered_gambiaealigned_phased.zarr'
-chromosome = "2L"
+callset_file = 'holly_wgs_samples_darlingi_filtered_phased.zarr'
+chromosome = "anop_mito"
 
 # %% open callset file
 callset = zarr.open(callset_file, mode='r')
@@ -57,22 +57,22 @@ else:
     sys.exit()  # This will stop the script. If you want the script to continue anyway, # out this line
 
 # %%  IMPORT METADATA
-df_samples= pd.read_csv('metadata_melasplusglobal.csv',sep=',',usecols=['sample','year','country','island','pcagroup'])
+df_samples= pd.read_csv('/mnt/storage11/sophie/darlingi/holly_wgs_paper_metadatav2.csv',sep=',',usecols=['sample','population'])
 df_samples.head()
-df_samples.groupby(by=['pcagroup']).count()
+df_samples.groupby(by=['population']).count()
 print("Imported metadata")
 
 # %% Choose sample populations to work with
-pop1 = 'group1'
-pop2 = 'group2'
-n_samples_pop1 = np.count_nonzero(df_samples.pcagroup == pop1)
-n_samples_pop2 = np.count_nonzero(df_samples.pcagroup == pop2)
+pop1 = 'Rondonia_State'
+pop2 = 'Colony_old'
+n_samples_pop1 = np.count_nonzero(df_samples.population == 'Rondonia_State')
+n_samples_pop2 = np.count_nonzero(df_samples.population == 'Colony_old')
 print("Population 1:", pop1, "Number of samples in pop1:", n_samples_pop1, "Population 2:", pop2, "Number of samples in pop2:", n_samples_pop2)
 
 # %% dictonary mapping population names to sample indices
 subpops = {
-    pop1: df_samples[df_samples.pcagroup == pop1].index,
-    pop2: df_samples[df_samples.pcagroup == pop2].index,
+    pop1: df_samples[df_samples.population == pop1].index,
+    pop2: df_samples[df_samples.population == pop2].index,
 }
 # %% get allele counts
 acs = genotype_all.count_alleles_subpops(subpops)
@@ -160,7 +160,7 @@ print("Threshold for positive value being significant is:",hist_fst_threshold)
 
 hist_fst_threshold = [(window,value) for window, value in zip(real_windows, real_fst) if value >= hist_fst_threshold]
 if hist_fst_threshold:
-    with open(f'fst_values_over_hist_threshold_{pop1}_{pop2}_{chromosome}_window_size_1000.csv', 'w') as fst_file:
+    with open(f'fst_values_over_hist_threshold_{pop1}_{pop2}_chromosome_{chromosome}_window_size_1000.csv', 'w') as fst_file:
         # Writing the header
         fst_file.write("Window_Start,Window_End,FST_Value\n")
         
@@ -270,7 +270,7 @@ print("Calculated 99th percentile values")
 # The 'real_fst' values that are above the histogram threshold for significance are saved in fst_values_over_hist_threshold_...txt
 # read in these fst values
 
-real_fst_values_over_hist_threshold = pd.read_csv(f'fst_values_over_hist_threshold_{pop1}_{pop2}_{chromosome}_window_size_1000.csv')
+real_fst_values_over_hist_threshold = pd.read_csv(f'fst_values_over_hist_threshold_{pop1}_{pop2}_chromosome_{chromosome}_window_size_1000.csv')
 print(f"Look at what we made earlier! Read in the csv of real fst values which are above histogram threshold for significance, which you made earlier")
 values_over_hist = len(real_fst_values_over_hist_threshold)
 print(f"The number of fst values over the histogram threshold for significance is: {values_over_hist}")
