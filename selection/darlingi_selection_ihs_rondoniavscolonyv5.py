@@ -26,7 +26,7 @@ os.getcwd()
 # allel.vcf_to_zarr('colonyold_darlingi_filtered_phased.vcf.gz', 'colonyold_darlingi_filtered_phased.zarr', fields='*', overwrite=True)
 
 # %%
-callset = zarr.open('/mnt/storage11/sophie/darlingi/holly_wgs_paper/colonyold_darlingi_filtered_phased.zarr', mode='r')
+callset = zarr.open('/mnt/storage11/sophie/darlingi/holly_wgs_paper/holly_wgs_samples_darlingi_filtered_phased.zarr', mode='r')
 #callset.tree(expand=True)
 
 # %%
@@ -41,7 +41,7 @@ df_samples.head()
 df_samples.groupby(by=['population']).count
 
 # %%
-## alpha-cypermethrin-resistant samples
+## rondonia samples
 
 sample_ids = callset['samples'][:]
 # Get sample identifiers for Cameroon samples from df_samples
@@ -55,7 +55,7 @@ gt_rondonia_samples = gt.take(rondonia_indices, axis=1)
 gt_rondonia_samples
 
 # %%
-## select variants that are segregating within gb_samples as only these will be informative
+## select variants that are segregating as only these will be informative
 ## also some selection tests don't support multiallelic variants, so just keep biallelics
 ## for this pipeline the VCF is already filtered so should be no biallelic SNPs anyway
 

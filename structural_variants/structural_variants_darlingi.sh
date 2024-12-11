@@ -50,24 +50,22 @@ bcftools view merged_genotyped_structural_variants_miss20.vcf.gz | grep -v "^#" 
 # 76472 structural variants in total across entire genome after filtered for missingness.
 
 # Filter the VCF based on genes of interest
-bcftools view -R genes_of_interest_+-1kb.bed merged_genotyped_structural_variants_sample_filt_miss20.vcf.gz -Oz -o genes_merged_genotyped_structural_variants_sample_filt_miss20.vcf.gz
-tabix -p vcf genes_merged_genotyped_structural_variants_sample_filt_miss20.vcf.gz
-bcftools view genes_merged_genotyped_structural_variants_sample_filt_miss20.vcf.gz | grep -v "^#" | wc -l
-# 215 variants in genes of interest
+bcftools view -R AnDar_allIR_structuralvariants1000.bed merged_genotyped_structural_variants_miss20.vcf.gz -Oz -o genes_merged_genotyped_structural_variants_miss20.vcf.gz
+tabix -p vcf genes_merged_genotyped_structural_variants_miss20.vcf.gz
+bcftools view genes_merged_genotyped_structural_variants_miss20.vcf.gz | grep -v "^#" | wc -l
+# 387 variants in genes of interest
 
-# Extract sample names
-bcftools view -h genes_merged_genotyped_structural_variants_sample_filt_miss20.vcf.gz | grep '^#CHROM' | cut -f10- > filtered_SV_vcf_sample_names.txt
 # Extract information from vcf
-bcftools query -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%QUAL\t%FILTER\t%INFO/SVTYPE\t[%GT\t]\n' genes_merged_genotyped_structural_variants_sample_filt_miss20.vcf.gz > structural_variants.txt
+bcftools query -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%QUAL\t%FILTER\t%INFO/SVTYPE\t[%GT\t]\n' genes_merged_genotyped_structural_variants_miss20.vcf.gz > structural_variants.txt
 
 # Annotate with snpeff
 
-snpEff Anopheles_gambiae genes_merged_genotyped_structural_variants_sample_filt_miss20.vcf.gz > snpeff_genes_merged_genotyped_structural_variants_sample_filt_miss20.vcf
-bgzip snpeff_genes_merged_genotyped_structural_variants_sample_filt_miss20.vcf
-tabix -p vcf snpeff_genes_merged_genotyped_structural_variants_sample_filt_miss20.vcf.gz
+snpEff Anopheles_darlingi_2 genes_merged_genotyped_structural_variants_miss20.vcf.gz > genes_merged_genotyped_structural_variants_miss20.ann.vcf
+bgzip genes_merged_genotyped_structural_variants_miss20.ann.vcf
+tabix -p vcf genes_merged_genotyped_structural_variants_miss20.ann.vcf.gz
 
 # Extract information from vcf with snpeff
-bcftools query -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%QUAL\t%FILTER\t%INFO/SVTYPE\t%INFO/ANN\t[%GT\t]\n' snpeff_genes_merged_genotyped_structural_variants_sample_filt_miss20.vcf.gz > snpeff_structural_variants.txt
+bcftools query -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%QUAL\t%FILTER\t%INFO/SVTYPE\t%INFO/ANN\t[%GT\t]\n' genes_merged_genotyped_structural_variants_miss20.ann.vcf.gz > structural_variants.ann.txt
 
 
 

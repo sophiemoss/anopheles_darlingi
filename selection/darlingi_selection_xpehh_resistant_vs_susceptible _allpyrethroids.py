@@ -15,7 +15,7 @@ import matplotlib.patches as mpatches
 import gffutils
 
 # %% set wd
-os.chdir('/mnt/storage11/sophie/darlingi/holly_wgs_paper')
+os.chdir('/mnt/storage11/sophie/darlingi/darlingi_database/phenotyped_colony')
 os.getcwd()
 
 # %%
@@ -24,7 +24,7 @@ os.getcwd()
 #allel.vcf_to_zarr('2019melasglobal_finalfiltered_gambiaealigned_phased.vcf.gz', '2019melasglobal_finalfiltered_gambiaealigned_phased.zarr', fields='*', overwrite=True)
 
 # %%
-callset = zarr.open('holly_wgs_samples_darlingi_filtered_phased.zarr', mode='r')
+callset = zarr.open('phenotyped_darlingi_filtered_phased.zarr', mode='r')
 #callset.tree(expand=True)
 
 # %%
@@ -34,42 +34,50 @@ print(gt.shape)
 
 # %%
 ## import metadata
-df_samples=pd.read_csv('/mnt/storage11/sophie/darlingi/holly_wgs_paper_metadatav2.csv',sep=',',usecols=['sample','population'])
+df_samples=pd.read_csv('/mnt/storage11/sophie/darlingi/darlingi_resistance_metadata.csv',sep=',',usecols=['sample','population','region','country','site','resistance_status'])
 df_samples.head()
-df_samples.groupby(by=['population']).count
+df_samples.groupby(by=['resistance_status']).count
 
 # %%
 ## VCF is phased so we can convert genotype arrays made earlier to haplotype array
 
 sample_ids = callset['samples'][:]
 
-# %% Create arrays needed for Rondonia samples
-# Get sample identifiers for Rondonia samples from df_samples
-Rondonia_sample_ids = df_samples[df_samples['population'] == 'Rondonia_State']['sample'].values
-# Find indices of these samples in the genotype array
-Rondonia_indices = np.array([np.where(sample_ids == id)[0][0] for id in Rondonia_sample_ids if id in sample_ids])
-# Verify the indices are within the correct range
-print("Max index:", Rondonia_indices.max(), "Sample array size:", len(sample_ids))
-# Select genotypes for Rondonia samples using the indices
-gt_Rondonia_samples = gt.take(Rondonia_indices, axis=1)
+# %% Create arrays needed for pyrethroid resistant samples
+# Get sample identifiers for pyrethroid_res samples from df_samples
+pyrethroid_res_sample_ids = df_samples[
+    (df_samples['resistance_status'] == 'alpha-cypermethrin-resistant') | 
+    (df_samples['resistance_status'] == 'etofenprox-resistant')
+]['sample'].values
 
-# %% Create arrays needed for Colony samples
-# Get sample identifiers for Colony samples from df_samples
-Colony_sample_ids = df_samples[df_samples['population'] == 'Colony_old']['sample'].values
 # Find indices of these samples in the genotype array
-Colony_indices = np.array([np.where(sample_ids == id)[0][0] for id in Colony_sample_ids if id in sample_ids])
+pyrethroid_res_indices = np.array([np.where(sample_ids == id)[0][0] for id in pyrethroid_res_sample_ids if id in sample_ids])
 # Verify the indices are within the correct range
-print("Max index:", Colony_indices.max(), "Sample array size:", len(sample_ids))
-# Select genotypes for Colony samples using the indices
-gt_Colony_samples = gt.take(Colony_indices, axis=1)
+print("Max index:", pyrethroid_res_indices.max(), "Sample array size:", len(sample_ids))
+# Select genotypes for pyrethroid_res samples using the indices
+gt_pyrethroid_res_samples = gt.take(pyrethroid_res_indices, axis=1)
+
+# %% Create arrays needed for pyrethroid susceptible samples
+# Get sample identifiers for pyrethroid_sus samples from df_samples
+pyrethroid_sus_sample_ids = df_samples[
+    (df_samples['resistance_status'] == 'alpha-cypermethrin-susceptible') | 
+    (df_samples['resistance_status'] == 'etofenprox-susceptible')
+]['sample'].values
+
+# Find indices of these samples in the genotype array
+pyrethroid_sus_indices = np.array([np.where(sample_ids == id)[0][0] for id in pyrethroid_sus_sample_ids if id in sample_ids])
+# Verify the indices are within the correct range
+print("Max index:", pyrethroid_sus_indices.max(), "Sample array size:", len(sample_ids))
+# Select genotypes for pyrethroid_sus samples using the indices
+gt_pyrethroid_sus_samples = gt.take(pyrethroid_sus_indices, axis=1)
 
 # %% these are from a phased VCF so we can convert the genotype arrays to haplotype arrays
 
-h_array_Rondonia = gt_Rondonia_samples.to_haplotypes().compute()
-h_array_Rondonia
+h_array_pyrethroid_res = gt_pyrethroid_res_samples.to_haplotypes().compute()
+h_array_pyrethroid_res
 
-h_array_Colony = gt_Colony_samples.to_haplotypes().compute()
-h_array_Colony
+h_array_pyrethroid_sus = gt_pyrethroid_sus_samples.to_haplotypes().compute()
+h_array_pyrethroid_sus
 
 # %% we need variant positions
 pos = callset['variants/POS'][:]
@@ -77,7 +85,7 @@ chrom = callset['variants/CHROM'][:]
 
 # %% compute xpehh
 # xpehh_raw = allel.xpehh(h_sus, h_res, pos, map_pos=None, min_ehh=0.05, include_edges=False, gap_scale=20000, max_gap=20000, is_accessible=None, use_threads=True)
-xpehh_raw = allel.xpehh(h_array_Colony, h_array_Rondonia, pos, use_threads=True)
+xpehh_raw = allel.xpehh(h_array_pyrethroid_sus, h_array_pyrethroid_res, pos, use_threads=True)
 xpehh_raw
 
 # %% look for where the biggest signal is
@@ -126,8 +134,8 @@ for chrom, length in chromosome_lengths.items():
 # %% Plot XP-EHH
 
 # Set threshold
-Colony_threshold = 4
-Rondonia_threshold = -4
+susceptible_threshold = 5
+resistant_threshold = -5
 
 # Set up the plot
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -169,7 +177,7 @@ for unique_chrom in filtered_chroms:
     adjusted_positions = chrom_positions_no_nan + cumulative_lengths.get(unique_chrom, 0)
 
     # Conditions for plotting
-    solid_mask = (chrom_xpehh_values_no_nan >= Colony_threshold) | (chrom_xpehh_values_no_nan <= Rondonia_threshold)
+    solid_mask = (chrom_xpehh_values_no_nan >= susceptible_threshold) | (chrom_xpehh_values_no_nan <= resistant_threshold)
     faded_mask = ~solid_mask
     
     # Plot solid points for values above 5 or below -5
@@ -187,50 +195,50 @@ for unique_chrom in filtered_chroms:
     legend_patches.append(patch)
 
 # Add significance threshold lines and legend
-ax.axhline(y=Colony_threshold, color='black', linestyle='--', label='Colony Threshold')
-ax.axhline(y=Rondonia_threshold, color='black', linestyle='--', label='Rondonia Threshold')
+ax.axhline(y=susceptible_threshold, color='black', linestyle='--', label='Susceptible Threshold')
+ax.axhline(y=resistant_threshold, color='black', linestyle='--', label='Resistant Threshold')
 ax.legend(handles=legend_patches, title='Chromosome', bbox_to_anchor=(1.05, 1), loc='upper left')
 
 # Set labels
 ax.set_xlabel('Genomic Position (bp)')
 ax.set_ylabel('XP-EHH')
 plt.tight_layout()
-plt.savefig('Rondonia_vs_Colony_xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
+plt.savefig('xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
 
 # %% list all positions with xpehh value over or below a certain threshold
 
-Colony_threshold_mask = xpehh_standardised_values >= Colony_threshold
-Rondonia_threshold_mask = xpehh_standardised_values <= Rondonia_threshold
+susceptible_threshold_mask = xpehh_standardised_values >= susceptible_threshold
+resistant_threshold_mask = xpehh_standardised_values <= resistant_threshold
 
 # %% Apply the mask to filter the data
-Colony_significant_chrom = chrom[Colony_threshold_mask]
-Colony_significant_pos = pos[Colony_threshold_mask]
-Colony_significant_xpehh = xpehh_standardised_values[Colony_threshold_mask]
+sus_significant_chrom = chrom[susceptible_threshold_mask]
+sus_significant_pos = pos[susceptible_threshold_mask]
+sus_significant_xpehh = xpehh_standardised_values[susceptible_threshold_mask]
 
-Rondonia_significant_chrom = chrom[Rondonia_threshold_mask]
-Rondonia_significant_pos = pos[Rondonia_threshold_mask]
-Rondonia_significant_xpehh = xpehh_standardised_values[Rondonia_threshold_mask]
+res_significant_chrom = chrom[resistant_threshold_mask]
+res_significant_pos = pos[resistant_threshold_mask]
+res_significant_xpehh = xpehh_standardised_values[resistant_threshold_mask]
 
 # %% Combine the filtered data into a structured array
-Colony_significant_xpehh_data = np.column_stack((Colony_significant_chrom, Colony_significant_pos, Colony_significant_xpehh))
-Rondonia_significant_xpehh_data = np.column_stack((Rondonia_significant_chrom, Rondonia_significant_pos, Rondonia_significant_xpehh))
+sus_significant_xpehh_data = np.column_stack((sus_significant_chrom, sus_significant_pos, sus_significant_xpehh))
+res_significant_xpehh_data = np.column_stack((res_significant_chrom, res_significant_pos, res_significant_xpehh))
 
 # %% Convert the structured array to a pandas DataFrame for easier handling
-df_significant_Colony_xpehh = pd.DataFrame(Colony_significant_xpehh_data, columns=['Chromosome', 'Position', 'XPEHH'])
-df_significant_Rondonia_xpehh = pd.DataFrame(Rondonia_significant_xpehh_data, columns = ['Chromosome', 'Position', 'XPEHH'])
+df_significant_sus_xpehh = pd.DataFrame(sus_significant_xpehh_data, columns=['Chromosome', 'Position', 'XPEHH'])
+df_significant_res_xpehh = pd.DataFrame(res_significant_xpehh_data, columns = ['Chromosome', 'Position', 'XPEHH'])
 
 # %% Save to csv
-df_significant_Colony_xpehh.to_csv(f'df_significant_xpehh_colony_threshold_{Colony_threshold}.csv', index=False)
-df_significant_Rondonia_xpehh.to_csv(f'df_significant_xpehh_rondonia_threshold_{Rondonia_threshold}.csv', index=False)
+df_significant_sus_xpehh.to_csv(f'df_allpyrethroids_significant_sus_xpehh_susceptible_threshold_{susceptible_threshold}.csv', index=False)
+df_significant_res_xpehh.to_csv(f'df_allpyrethroids_significant_res_xpehh_resistant_threshold_{resistant_threshold}.csv', index=False)
 
 
-# %% Annotate the Colony XPEHH file
+# %% Annotate the Susceptible XPEHH file
 
 print("Using GFF file to bring in annotations for these positions")
 
 # Parameters
-input_file_name = f"df_significant_xpehh_colony_threshold_{Colony_threshold}.csv"
-output_file_name = f"df_significant_xpehh_colony_threshold_{Colony_threshold}_annotated.csv"
+input_file_name = f"df_allpyrethroids_significant_sus_xpehh_susceptible_threshold_{susceptible_threshold}.csv"
+output_file_name = f"df_allpyrethroids_significant_sus_xpehh_susceptible_threshold_{susceptible_threshold}_annotated.csv"
 gff_file = '/mnt/storage11/sophie/reference_genomes/An_darlingi_ncbi/GCF_943734745.1_idAnoDarlMG_H_01_genomic.gff'
 
 # Function to find and format the GFF line(s) that overlap a given position
@@ -299,11 +307,11 @@ with open(output_file_name, "w") as outfile:
 
 print(f"XP-EHH significant values for susceptible samples identified and GFF annotations written to: {output_file_name}")
 
-# %% Annotate the Rondonia XPEHH file
+# %% Annotate the Resistant XPEHH file
 print("Using GFF file to annotate resistant XPEHH positions")
 
-input_file_name = f"df_significant_xpehh_rondonia_threshold_{Rondonia_threshold}.csv"
-output_file_name = f"df_significant_xpehh_rondonia_threshold_{Rondonia_threshold}_annotated.csv"
+input_file_name = f"df_allpyrethroids_significant_res_xpehh_resistant_threshold_{resistant_threshold}.csv"
+output_file_name = f"df_allpyrethroids_significant_res_xpehh_resistant_threshold_{resistant_threshold}_annotated.csv"
 gff_file = '/mnt/storage11/sophie/reference_genomes/An_darlingi_ncbi/GCF_943734745.1_idAnoDarlMG_H_01_genomic.gff'
 
 # Function to find and format the GFF line(s) that overlap a given position

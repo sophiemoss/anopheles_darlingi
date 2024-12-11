@@ -1,14 +1,14 @@
 # %% 
 import subprocess
 import pandas as pd
-working_directory = "/mnt/storage11/sophie/darlingi/holly_wgs_paper"
+working_directory = "/mnt/storage11/sophie/darlingi/holly_wgs_paper/SNPs"
 os.chdir(working_directory)
 
 # %% Define the input file with positions (CHR and POS)
-vcf_filename = "F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf.gz"  # Replace with your VCF file path
+vcf_filename = "renamedchr_F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf.gz"  # Replace with your VCF file path
 
 # %% Define the input file with gene positions
-positions_file = "/mnt/storage11/sophie/darlingi/holly_wgs_paper/SNPs/all_genes_of_interest.txt"
+positions_file = "/mnt/storage11/sophie/darlingi/holly_wgs_paper/SNPs/four_key_genes_of_interest_positions.txt"
 
 # %% Prepare a list to collect data
 data = []
@@ -61,7 +61,7 @@ with open(positions_file, "r") as infile:
 df = pd.DataFrame(data, columns=["Gene", "Chrom", "Position", "Ref", "Alt", "Filter", "Info", "SamplesWithGenotypes"])
 
 # %% Optionally, save the DataFrame to a file
-output_file = "ALL_IR_gene_snp_info_from_filtered_vcf.csv"
+output_file = "four_key_gene_snp_info_from_annotated_vcf.csv"
 df.to_csv(output_file, index=False)
 print("DataFrame created and saved.")
 
