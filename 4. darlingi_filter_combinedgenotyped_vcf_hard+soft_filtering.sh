@@ -200,14 +200,3 @@ bcftools query -f '%CHROM\t%POS\n' phenotyped_darlingi_filtered_phased.vcf.gz | 
 snpEff Anopheles_darlingi F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.vcf.gz > F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.ann.vcf
 bgzip F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.ann.vcf
 tabix -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.ann.vcf.gz
-
-
-## Quick flter to just keep the samples that Holly used in her WGS paper
-# min-ac=1 so that all variants that remain are still variants after sample removal
-
-bcftools view -S samples_to_keep.txt F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz --min-ac=1 -Oz -o holly_paper_samples_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-
-tabix -p vcf holly_paper_samples_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
-bcftools view -H holly_paper_samples_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz | wc -l
-
-bcftools filter -e 'F_MISSING > 0.2 || MAF <= 0.02' -O z -o F6_holly_paper_samples_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz holly_paper_samples_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz

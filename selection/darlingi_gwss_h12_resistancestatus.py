@@ -59,27 +59,26 @@ filtered_ac_array = ac_array.compress(ac_array_filter, axis=0)
 filtered_gt = genotype_array.compress(ac_array_filter, axis = 0)
 
 # %% partition samples by resistance status using metadata, split by index value and store as array
-alphacyp_res = df_samples[df_samples['resistance_status'] == 'alpha-cypermethrin-resistant'].index.values
-alphacyp_sus = df_samples[df_samples['resistance_status'] == 'alpha-cypermethrin-suscpetible'].index.values
-etofenprox_res = df_samples[df_samples['resistance_status'] == 'etofenprox-resistant'].index.values
-etofenprox_sus = df_samples[df_samples['resistance_status'] == 'etofenprox-susceptible'].index.values
+pyrethroid_res = df_samples[
+    (df_samples['resistance_status'] == 'alpha-cypermethrin-resistant') |
+    (df_samples['resistance_status'] == 'etofenprox-resistant')
+].index.values
 
+pyrethroid_sus = df_samples[
+    (df_samples['resistance_status'] == 'alpha-cypermethrin-susceptible') |
+    (df_samples['resistance_status'] == 'etofenprox-susceptible')
+].index.values
 
 # %% select genotypes for variants and store as a genotype dask array
 # this array contains many columns (1 for each mosquito), many million rows for each variant, and stores the genotype for each.
-gt_alphacyp_res = filtered_gt.take(alphacyp_res, axis=1)
-gt_alphacyp_sus = filtered_gt.take(alphacyp_sus, axis=1)
-gt_etofenprox_res = filtered_gt.take(etofenprox_res, axis=1)
-gt_etofenprox_sus = filtered_gt.take(etofenprox_sus, axis=1)
+gt_pyrethroid_res = filtered_gt.take(pyrethroid_res, axis=1)
+gt_pyrethroid_sus = filtered_gt.take(pyrethroid_sus, axis=1)
 
 
 # %% convert this genotype array to haplotype array (we can do this because the original data was phased)
 # the haplotype array is similar to the genotype array, but there are two columns per mosquito, one for each haplotype
-h_alphacyp_res = gt_alphacyp_res.to_haplotypes().compute()
-h_alphacyp_sus = gt_alphacyp_sus.to_haplotypes().compute()
-h_etofenprox_res = gt_etofenprox_res.to_haplotypes().compute()
-h_etofenprox_sus = gt_etofenprox_sus.to_haplotypes().compute()
-
+h_pyrethroid_res = gt_pyrethroid_res.to_haplotypes().compute()
+h_pyrethroid_sus = gt_pyrethroid_sus.to_haplotypes().compute()
 
 # %% also store chromosome of each variant as we need this for shading the plots later
 chrom = callset['variants/CHROM'][:]
@@ -102,53 +101,52 @@ else:
 
 # %% H12 was calculated using phased biallelic SNPs in 1000 bp windows along the genome
 # SNP windows, using the garuds_h function in scikit-allel.
-# Working with Bissau samples only.
 
-##### ALPHACYPERMETHRIN RESISTANT #####
+##### PYRETHROID RESISTANT #####
 
 # ######## Create Iterations ##########
 
 # Your list of tuples - there are two haplotypes per mosquito, for bissau melas there are 
-# 9 alphacypermethrin resistant, so 18 haplotypes in the haplotype array
+# 14 pyrethroid resistant, so 28 haplotypes in the haplotype array
 tuples_list = [
     (0, 1), (2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15),
-    (16, 17)
+    (16, 17), (18, 19), (20, 21), (22, 23), (24, 25), (26, 27)
 ]
 
 # Number of iterations
 n_iterations = 200
 
 # Initialize a list to store h12 values for each window across all iterations
-iterated_alphacyp_res_h12_values = []
+iterated_pyrethroid_res_h12_values = []
 
 # Loop for n_iterations
 for _ in range(n_iterations):
     # Randomly select n-1 tuples
-    selected_tuples = random.sample(tuples_list, 8)
+    selected_tuples = random.sample(tuples_list, 13)
 
     # Extract the column indices from the tuples
     column_indices = [idx for tup in selected_tuples for idx in tup]
 
     # Subset the haplotype array
-    subset_alphacyp_res_hap_array = h_alphacyp_res[:, column_indices]
+    subset_pyrethroid_res_hap_array = h_pyrethroid_res[:, column_indices]
 
     # Calculate h12 for the subsetted hap array
-    _, iterated_real_alphacyp_res_h12, _, _ = allel.moving_garud_h(subset_alphacyp_res_hap_array, 1000)
+    _, iterated_real_pyrethroid_res_h12, _, _ = allel.moving_garud_h(subset_pyrethroid_res_hap_array, 1000)
 
     # Store the h12 value for each window in the list
-    iterated_alphacyp_res_h12_values.append(iterated_real_alphacyp_res_h12)
+    iterated_pyrethroid_res_h12_values.append(iterated_real_pyrethroid_res_h12)
 
 # Convert the list to a numpy array
-iterated_alphacyp_res_h12_values_array = np.array(iterated_alphacyp_res_h12_values)
+iterated_pyrethroid_res_h12_values_array = np.array(iterated_pyrethroid_res_h12_values)
 
 # Calculate the mean of the h12 values for each window
-mean_alphacyp_res_h12_per_window = np.mean(iterated_alphacyp_res_h12_values_array, axis=0)
+mean_pyrethroid_res_h12_per_window = np.mean(iterated_pyrethroid_res_h12_values_array, axis=0)
 
 # mean_h12_per_window now contains the mean h12 value for each window
 
 # %% Check the number of windows for each array 
-num_windows_alphacyp_res = mean_alphacyp_res_h12_per_window.shape[0]
-print("Number of windows for alphacyp_res samples:", num_windows_alphacyp_res)
+num_windows_pyrethroid_res = mean_pyrethroid_res_h12_per_window.shape[0]
+print("Number of windows for pyrethroid_res samples:", num_windows_pyrethroid_res)
 
 # %% The h12 values are calculated in windows of 1000 SNPs. Each SNP has a POS value which is in the POS array.
 window_size = 1000  # Define the window size as 1000 SNPs
@@ -158,34 +156,34 @@ num_windows = len(pos_filtered) // window_size  # Calculate the number of window
 # for each iteration (i) a segment of pos_res_seg is processed
 median_positions = [np.median(pos_filtered[i * window_size: (i + 1) * window_size]) for i in range(num_windows)]
 
-alphacyp_res_h12_chrom = {}
+pyrethroid_res_h12_chrom = {}
 # Loop through each window
 for i in range(num_windows):
     chrom = chrom_filtered[i * window_size]  # Assumes the chromosome for all SNPs in a single window is consistent 
     pos = median_positions[i]
-    h12 = mean_alphacyp_res_h12_per_window[i]
+    h12 = mean_pyrethroid_res_h12_per_window[i]
     # Add this data to the corresponding chromosome in the dictionary
-    if chrom not in alphacyp_res_h12_chrom:
-        alphacyp_res_h12_chrom[chrom] = {'positions': [], 'h12': []}
-    alphacyp_res_h12_chrom[chrom]['positions'].append(pos)
-    alphacyp_res_h12_chrom[chrom]['h12'].append(h12)
+    if chrom not in pyrethroid_res_h12_chrom:
+        pyrethroid_res_h12_chrom[chrom] = {'positions': [], 'h12': []}
+    pyrethroid_res_h12_chrom[chrom]['positions'].append(pos)
+    pyrethroid_res_h12_chrom[chrom]['h12'].append(h12)
 # Now plot for each chromosome
-for chrom in alphacyp_res_h12_chrom:
+for chrom in pyrethroid_res_h12_chrom:
     plt.figure(figsize=(10, 6))
-    plt.scatter(alphacyp_res_h12_chrom[chrom]['positions'], alphacyp_res_h12_chrom[chrom]['h12'], alpha=0.6)
+    plt.scatter(pyrethroid_res_h12_chrom[chrom]['positions'], pyrethroid_res_h12_chrom[chrom]['h12'], alpha=0.6)
     plt.xlabel('Median position of SNP windows across the chromosome')
-    plt.ylabel('Mean H12 value for alphacypermethrin resistant Anopheles darlingi samples')
+    plt.ylabel('Mean H12 value for pyrethroidermethrin resistant Anopheles darlingi samples')
     plt.title(f'Genome Wide Selection Scan of H12 Values across Chromosome {chrom}')
     filename = f'H12_value_200_iterations_{chrom}.png'
     plt.savefig(filename)
     plt.show()
-# Save the alphacyp_res state samples dictionary which contains chromsome, positions and h12 value.
+# Save the pyrethroid_res state samples dictionary which contains chromsome, positions and h12 value.
 import csv
-with open('alphacyp_res_h12_chrom.csv', 'w', newline='') as file:
+with open('pyrethroid_res_h12_chrom.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Chromosome', 'Position', 'H12'])
     # Iterate through the dictionary and write data
-    for chrom, data in alphacyp_res_h12_chrom.items():
+    for chrom, data in pyrethroid_res_h12_chrom.items():
         for position, h12 in zip(data['positions'], data['h12']):
             writer.writerow([chrom, position, h12])
 
@@ -197,10 +195,10 @@ with open('iterated_mean_h12_above_02_data.csv', 'w', newline='') as file:
     writer = csv.writer(file)
 
     # Write the header
-    writer.writerow(['Chromosome', 'Position', 'mean_h12_alphacyp_res'])
+    writer.writerow(['Chromosome', 'Position', 'mean_h12_pyrethroid_res'])
 
     # Iterate through the dictionary and write data for H12 values above 0.2
-    for chrom, data in alphacyp_res_h12_chrom.items():
+    for chrom, data in pyrethroid_res_h12_chrom.items():
         for pos, h12 in zip(data['positions'], data['h12']):
             # Check if H12 value is above 0.2 for either resistant or not resistant
             if h12 > 0.5:
@@ -208,51 +206,53 @@ with open('iterated_mean_h12_above_02_data.csv', 'w', newline='') as file:
 
 
 
-# ALPHACYPERMETHRIN SUSCEPTIBLE
+# PERMETHRIN SUSCEPTIBLE
 
 # %% ######## Create Iterations ##########
 
 # Your list of tuples - there are two haplotypes per mosquito, for bissau melas there are 
-# 14 alphacypermethrin resistant, so 28 haplotypes in the haplotype array
+# 26 pyrethroidermethrin resistant, so 52 haplotypes in the haplotype array
 tuples_list = [
     (0, 1), (2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15),
-    (16, 17), (18, 19), (20, 21), (22, 23), (24, 25), (26, 27)
+    (16, 17), (18, 19), (20, 21), (22, 23), (24, 25), (26, 27), (28, 29), 
+    (30, 31), (32, 33), (34, 35), (36, 37), (38, 39), (40, 41), (42, 43), 
+    (44, 45), (46, 47), (48, 49), (50, 51)
 ]
 
 # Number of iterations
 n_iterations = 200
 
 # Initialize a list to store h12 values for each window across all iterations
-iterated_alphacyp_sus_h12_values = []
+iterated_pyrethroid_sus_h12_values = []
 
 # Loop for n_iterations
 for _ in range(n_iterations):
     # Randomly select n-1 tuples
-    selected_tuples = random.sample(tuples_list, 13)
+    selected_tuples = random.sample(tuples_list, 25)
 
     # Extract the column indices from the tuples
     column_indices = [idx for tup in selected_tuples for idx in tup]
 
     # Subset the haplotype array
-    subset_alphacyp_sus_hap_array = h_alphacyp_sus[:, column_indices]
+    subset_pyrethroid_sus_hap_array = h_pyrethroid_sus[:, column_indices]
 
     # Calculate h12 for the subsetted hap array
-    _, iterated_real_alphacyp_sus_h12, _, _ = allel.moving_garud_h(subset_alphacyp_sus_hap_array, 1000)
+    _, iterated_real_pyrethroid_sus_h12, _, _ = allel.moving_garud_h(subset_pyrethroid_sus_hap_array, 1000)
 
     # Store the h12 value for each window in the list
-    iterated_alphacyp_sus_h12_values.append(iterated_real_alphacyp_sus_h12)
+    iterated_pyrethroid_sus_h12_values.append(iterated_real_pyrethroid_sus_h12)
 
 # Convert the list to a numpy array
-iterated_alphacyp_sus_h12_values_array = np.array(iterated_alphacyp_sus_h12_values)
+iterated_pyrethroid_sus_h12_values_array = np.array(iterated_pyrethroid_sus_h12_values)
 
 # Calculate the mean of the h12 values for each window
-mean_alphacyp_sus_h12_per_window = np.mean(iterated_alphacyp_sus_h12_values_array, axis=0)
+mean_pyrethroid_sus_h12_per_window = np.mean(iterated_pyrethroid_sus_h12_values_array, axis=0)
 
 # mean_h12_per_window now contains the mean h12 value for each window
 
 # %% Check the number of windows for each array 
-num_windows_alphacyp_sus = mean_alphacyp_sus_h12_per_window.shape[0]
-print("Number of windows for alphacyp_sus samples:", num_windows_alphacyp_sus)
+num_windows_pyrethroid_sus = mean_pyrethroid_sus_h12_per_window.shape[0]
+print("Number of windows for pyrethroid_sus samples:", num_windows_pyrethroid_sus)
 
 # %% The h12 values are calculated in windows of 1000 SNPs. Each SNP has a POS value which is in the POS array.
 window_size = 1000  # Define the window size as 1000 SNPs
@@ -262,34 +262,34 @@ num_windows = len(pos_filtered) // window_size  # Calculate the number of window
 # for each iteration (i) a segment of pos_res_seg is processed
 median_positions = [np.median(pos_filtered[i * window_size: (i + 1) * window_size]) for i in range(num_windows)]
 
-alphacyp_sus_h12_chrom = {}
+pyrethroid_sus_h12_chrom = {}
 # Loop through each window
 for i in range(num_windows):
     chrom = chrom_filtered[i * window_size]  # Assumes the chromosome for all SNPs in a single window is consistent 
     pos = median_positions[i]
-    h12 = mean_alphacyp_sus_h12_per_window[i]
+    h12 = mean_pyrethroid_sus_h12_per_window[i]
     # Add this data to the corresponding chromosome in the dictionary
-    if chrom not in alphacyp_sus_h12_chrom:
-        alphacyp_sus_h12_chrom[chrom] = {'positions': [], 'h12': []}
-    alphacyp_sus_h12_chrom[chrom]['positions'].append(pos)
-    alphacyp_sus_h12_chrom[chrom]['h12'].append(h12)
+    if chrom not in pyrethroid_sus_h12_chrom:
+        pyrethroid_sus_h12_chrom[chrom] = {'positions': [], 'h12': []}
+    pyrethroid_sus_h12_chrom[chrom]['positions'].append(pos)
+    pyrethroid_sus_h12_chrom[chrom]['h12'].append(h12)
 # Now plot for each chromosome
-for chrom in alphacyp_sus_h12_chrom:
+for chrom in pyrethroid_sus_h12_chrom:
     plt.figure(figsize=(10, 6))
-    plt.scatter(alphacyp_sus_h12_chrom[chrom]['positions'], alphacyp_sus_h12_chrom[chrom]['h12'], alpha=0.6)
+    plt.scatter(pyrethroid_sus_h12_chrom[chrom]['positions'], pyrethroid_sus_h12_chrom[chrom]['h12'], alpha=0.6)
     plt.xlabel('Median position of SNP windows across the chromosome')
-    plt.ylabel('Mean H12 value for alphacypermethrin susceptible Anopheles darlingi samples')
+    plt.ylabel('Mean H12 value for pyrethroidermethrin susceptible Anopheles darlingi samples')
     plt.title(f'Genome Wide Selection Scan of H12 Values across Chromosome {chrom}')
     filename = f'H12_value_200_iterations_{chrom}.png'
     plt.savefig(filename)
     plt.show()
-# Save the alphacyp_res state samples dictionary which contains chromsome, positions and h12 value.
+# Save the pyrethroid_res state samples dictionary which contains chromsome, positions and h12 value.
 import csv
-with open('alphacyp_sus_h12_chrom.csv', 'w', newline='') as file:
+with open('pyrethroid_sus_h12_chrom.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Chromosome', 'Position', 'H12'])
     # Iterate through the dictionary and write data
-    for chrom, data in alphacyp_res_h12_chrom.items():
+    for chrom, data in pyrethroid_res_h12_chrom.items():
         for position, h12 in zip(data['positions'], data['h12']):
             writer.writerow([chrom, position, h12])
 
@@ -303,10 +303,10 @@ with open('iterated_mean_h12_above_05_data.csv', 'w', newline='') as file:
     writer = csv.writer(file)
 
     # Write the header
-    writer.writerow(['Chromosome', 'Position', 'mean_h12_alphacyp_res'])
+    writer.writerow(['Chromosome', 'Position', 'mean_h12_pyrethroid_res'])
 
     # Iterate through the dictionary and write data for H12 values above 0.2
-    for chrom, data in alphacyp_res_h12_chrom.items():
+    for chrom, data in pyrethroid_res_h12_chrom.items():
         for pos, h12 in zip(data['positions'], data['h12']):
             # Check if H12 value is above 0.2 for either resistant or not resistant
             if h12 > 0.5:
@@ -322,15 +322,15 @@ chrom_h12_data = {}
 for i in range(num_windows):
     chrom = chrom_filtered[i * window_size]  # Assuming each window is from the same chromosome
     pos = median_positions[i]
-    alphacyp_res = mean_alphacyp_res_h12_per_window[i]
-    alphacyp_sus = mean_alphacyp_sus_h12_per_window[i]
+    pyrethroid_res = mean_pyrethroid_res_h12_per_window[i]
+    pyrethroid_sus = mean_pyrethroid_sus_h12_per_window[i]
     
     # Add this data to the corresponding chromosome in the dictionary
     if chrom not in chrom_h12_data:
         chrom_h12_data[chrom] = {'positions': [], 'h12_res': [], 'h12_sus': []}
     chrom_h12_data[chrom]['positions'].append(pos)
-    chrom_h12_data[chrom]['h12_res'].append(alphacyp_res)
-    chrom_h12_data[chrom]['h12_sus'].append(alphacyp_sus)
+    chrom_h12_data[chrom]['h12_res'].append(pyrethroid_res)
+    chrom_h12_data[chrom]['h12_sus'].append(pyrethroid_sus)
 
 # Now plot for each chromosome
 for chrom in chrom_h12_data:
@@ -344,258 +344,10 @@ for chrom in chrom_h12_data:
     plt.title(f'Genome Wide Selection Scan of H12 Values across Chromosome {chrom}')
     plt.legend()
     # Save the plot
-    filename = f'darlingi_alphacypermethrin_phenotyped_H12_chromosome_{chrom}.png'
+    filename = f'darlingi_pyrethroid_phenotyped_H12_chromosome_{chrom}.png'
     plt.savefig(filename, dpi=300)  # Save with high resolution
     # Display the plot
     plt.show()
-
-# %%
-######### ETOFENPROX RESISTANT ########
-
-### Create Iterations ###
-# Your list of tuples - there are two haplotypes per mosquito 
-# 5 etofenprox resistant, so 10 haplotypes in the haplotype array
-tuples_list = [
-    (0, 1), (2, 3), (4, 5), (6, 7), (8, 9)
-]
-
-# Number of iterations
-n_iterations = 200
-
-# Initialize a list to store h12 values for each window across all iterations
-iterated_etofenprox_res_h12_values = []
-
-# Loop for n_iterations
-for _ in range(n_iterations):
-    # Randomly select n-1 tuples
-    selected_tuples = random.sample(tuples_list, 4)
-
-    # Extract the column indices from the tuples
-    column_indices = [idx for tup in selected_tuples for idx in tup]
-
-    # Subset the haplotype array
-    subset_etofenprox_res_hap_array = h_etofenprox_res[:, column_indices]
-
-    # Calculate h12 for the subsetted hap array
-    _, iterated_real_etofenprox_res_h12, _, _ = allel.moving_garud_h(subset_etofenprox_res_hap_array, 1000)
-
-    # Store the h12 value for each window in the list
-    iterated_etofenprox_res_h12_values.append(iterated_real_etofenprox_res_h12)
-
-# Convert the list to a numpy array
-iterated_etofenprox_res_h12_values_array = np.array(iterated_etofenprox_res_h12_values)
-
-# Calculate the mean of the h12 values for each window
-mean_etofenprox_res_h12_per_window = np.mean(iterated_etofenprox_res_h12_values_array, axis=0)
-
-# mean_h12_per_window now contains the mean h12 value for each window
-
-# %% Check the number of windows for each array 
-num_windows_etofenprox_res = mean_etofenprox_res_h12_per_window.shape[0]
-print("Number of windows for etofenprox_res samples:", num_windows_etofenprox_res)
-
-# %% The h12 values are calculated in windows of 1000 SNPs. Each SNP has a POS value which is in the POS array.
-window_size = 1000  # Define the window size as 1000 SNPs
-num_windows = len(pos_filtered) // window_size  # Calculate the number of windows in total
-
-# %% Plot. Calculate the median genomic position for each window
-# for each iteration (i) a segment of pos_res_seg is processed
-median_positions = [np.median(pos_filtered[i * window_size: (i + 1) * window_size]) for i in range(num_windows)]
-
-etofenprox_res_h12_chrom = {}
-# Loop through each window
-for i in range(num_windows):
-    chrom = chrom_filtered[i * window_size]  # Assumes the chromosome for all SNPs in a single window is consistent 
-    pos = median_positions[i]
-    h12 = mean_etofenprox_res_h12_per_window[i]
-    # Add this data to the corresponding chromosome in the dictionary
-    if chrom not in etofenprox_res_h12_chrom:
-        etofenprox_res_h12_chrom[chrom] = {'positions': [], 'h12': []}
-    etofenprox_res_h12_chrom[chrom]['positions'].append(pos)
-    etofenprox_res_h12_chrom[chrom]['h12'].append(h12)
-# Now plot for each chromosome
-for chrom in etofenprox_res_h12_chrom:
-    plt.figure(figsize=(10, 6))
-    plt.scatter(etofenprox_res_h12_chrom[chrom]['positions'], etofenprox_res_h12_chrom[chrom]['h12'], alpha=0.6)
-    plt.xlabel('Median position of SNP windows across the chromosome')
-    plt.ylabel('Mean H12 value for etofenprox resistant Anopheles darlingi samples')
-    plt.title(f'Genome Wide Selection Scan of H12 Values across Chromosome {chrom}')
-    filename = f'H12_value_200_iterations_{chrom}.png'
-    plt.savefig(filename)
-    plt.show()
-# Save the etofenprox_res state samples dictionary which contains chromsome, positions and h12 value.
-import csv
-with open('etofenprox_res_h12_chrom.csv', 'w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerow(['Chromosome', 'Position', 'H12'])
-    # Iterate through the dictionary and write data
-    for chrom, data in etofenprox_res_h12_chrom.items():
-        for position, h12 in zip(data['positions'], data['h12']):
-            writer.writerow([chrom, position, h12])
-
-### Visually inspect for peaks and select a cutoff point ###
-
-# %% Extract the h-values above 0.5 with their corresponding SNP window's median genomic position
-# Open a CSV file to write
-with open('iterated_mean_h12_above_08_data.csv', 'w', newline='') as file:
-    writer = csv.writer(file)
-
-    # Write the header
-    writer.writerow(['Chromosome', 'Position', 'mean_h12_etofenprox_res'])
-
-    # Iterate through the dictionary and write data for H12 values above 0.2
-    for chrom, data in etofenprox_res_h12_chrom.items():
-        for pos, h12 in zip(data['positions'], data['h12']):
-            # Check if H12 value is above 0.2 for either resistant or not resistant
-            if h12 > 0.8:
-                writer.writerow([chrom, pos, h12, h12])
-
-# %%
-##### ETOFENPROX SUSCEPTIBLE #####
-
- ######## Create Iterations ##########
-# Your list of tuples - there are two haplotypes per mosquito 
-# 12 etofenprox resistant, so 24 haplotypes in the haplotype array
-tuples_list = [
-    (0, 1), (2, 3), (4, 5), (6, 7), (8, 9), (10, 11),
-    (12, 13), (14, 15), (16, 17), (18, 19), (20, 21),
-    (22, 23)
-]
-
-# Number of iterations
-n_iterations = 200
-
-# Initialize a list to store h12 values for each window across all iterations
-iterated_etofenprox_sus_h12_values = []
-
-# Loop for n_iterations
-for _ in range(n_iterations):
-    # Randomly select n-1 tuples
-    selected_tuples = random.sample(tuples_list, 11)
-
-    # Extract the column indices from the tuples
-    column_indices = [idx for tup in selected_tuples for idx in tup]
-
-    # Subset the haplotype array
-    subset_etofenprox_sus_hap_array = h_etofenprox_sus[:, column_indices]
-
-    # Calculate h12 for the subsetted hap array
-    _, iterated_real_etofenprox_sus_h12, _, _ = allel.moving_garud_h(subset_etofenprox_sus_hap_array, 1000)
-
-    # Store the h12 value for each window in the list
-    iterated_etofenprox_sus_h12_values.append(iterated_real_etofenprox_sus_h12)
-
-# Convert the list to a numpy array
-iterated_etofenprox_sus_h12_values_array = np.array(iterated_etofenprox_sus_h12_values)
-
-# Calculate the mean of the h12 values for each window
-mean_etofenprox_sus_h12_per_window = np.mean(iterated_etofenprox_sus_h12_values_array, axis=0)
-
-# mean_h12_per_window now contains the mean h12 value for each window
-
-# %% Check the number of windows for each array 
-num_windows_etofenprox_sus = mean_etofenprox_sus_h12_per_window.shape[0]
-print("Number of windows for etofenprox_sus samples:", num_windows_etofenprox_sus)
-
-# %% The h12 values are calculated in windows of 1000 SNPs. Each SNP has a POS value which is in the POS array.
-window_size = 1000  # Define the window size as 1000 SNPs
-num_windows = len(pos_filtered) // window_size  # Calculate the number of windows in total
-
-# %% Plot. Calculate the median genomic position for each window
-# for each iteration (i) a segment of pos_res_seg is processed
-median_positions = [np.median(pos_filtered[i * window_size: (i + 1) * window_size]) for i in range(num_windows)]
-
-etofenprox_sus_h12_chrom = {}
-# Loop through each window
-for i in range(num_windows):
-    chrom = chrom_filtered[i * window_size]  # Assumes the chromosome for all SNPs in a single window is consistent 
-    pos = median_positions[i]
-    h12 = mean_etofenprox_sus_h12_per_window[i]
-    # Add this data to the corresponding chromosome in the dictionary
-    if chrom not in etofenprox_sus_h12_chrom:
-        etofenprox_sus_h12_chrom[chrom] = {'positions': [], 'h12': []}
-    etofenprox_sus_h12_chrom[chrom]['positions'].append(pos)
-    etofenprox_sus_h12_chrom[chrom]['h12'].append(h12)
-# Now plot for each chromosome
-for chrom in etofenprox_sus_h12_chrom:
-    plt.figure(figsize=(10, 6))
-    plt.scatter(etofenprox_sus_h12_chrom[chrom]['positions'], etofenprox_sus_h12_chrom[chrom]['h12'], alpha=0.6)
-    plt.xlabel('Median position of SNP windows across the chromosome')
-    plt.ylabel('Mean H12 value for etofenprox susceptible Anopheles darlingi samples')
-    plt.title(f'Genome Wide Selection Scan of H12 Values across Chromosome {chrom}')
-    filename = f'H12_value_200_iterations_{chrom}.png'
-    plt.savefig(filename)
-    plt.show()
-# Save the etofenprox_res state samples dictionary which contains chromsome, positions and h12 value.
-import csv
-with open('etofenprox_sus_h12_chrom.csv', 'w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerow(['Chromosome', 'Position', 'H12'])
-    # Iterate through the dictionary and write data
-    for chrom, data in etofenprox_sus_h12_chrom.items():
-        for position, h12 in zip(data['positions'], data['h12']):
-            writer.writerow([chrom, position, h12])
-
-### Visually inspect for peaks and select a cutoff point ###
-
-# %% Extract the h-values above 0.5 with their corresponding SNP window's median genomic position
-# Open a CSV file to write
-with open('etofenprox_sus_iterated_mean_h12_above_08_data.csv', 'w', newline='') as file:
-    writer = csv.writer(file)
-
-    # Write the header
-    writer.writerow(['Chromosome', 'Position', 'mean_h12_etofenprox_sus'])
-
-    # Iterate through the dictionary and write data for H12 values above 0.2
-    for chrom, data in etofenprox_sus_h12_chrom.items():
-        for pos, h12 in zip(data['positions'], data['h12']):
-            # Check if H12 value is above 0.2 for either resistant or not resistant
-            if h12 > 0.8:
-                writer.writerow([chrom, pos, h12, h12])
-
-#####
-# %% Plot etofenprox resistant and susceptible on the same graph
-# Create a dictionary to hold H12 values and positions for each chromosome, for both resistant and not resistant
-chrom_h12_data = {}
-# Loop through each window
-for i in range(num_windows):
-    chrom = chrom_filtered[i * window_size]  # Assuming each window is from the same chromosome
-    pos = median_positions[i]
-    etofenprox_res = mean_etofenprox_res_h12_per_window[i]
-    etofenprox_sus = mean_etofenprox_sus_h12_per_window[i]
-    
-    # Add this data to the corresponding chromosome in the dictionary
-    if chrom not in chrom_h12_data:
-        chrom_h12_data[chrom] = {'positions': [], 'h12_res': [], 'h12_sus': []}
-    chrom_h12_data[chrom]['positions'].append(pos)
-    chrom_h12_data[chrom]['h12_res'].append(etofenprox_res)
-    chrom_h12_data[chrom]['h12_sus'].append(etofenprox_sus)
-
-# Now plot for each chromosome
-for chrom in chrom_h12_data:
-    plt.figure(figsize=(10, 6))
-    
-    # Plotting resistant and susceptible H12 values
-    plt.scatter(chrom_h12_data[chrom]['positions'], chrom_h12_data[chrom]['h12_res'], alpha=0.6, color='blue', label='Resistant')    
-    plt.scatter(chrom_h12_data[chrom]['positions'], chrom_h12_data[chrom]['h12_sus'], alpha=0.6, color='plum', label='Susceptible')
-    plt.xlabel('Median position of SNP windows across the chromosome')
-    plt.ylabel('Mean H12 Value')
-    plt.title(f'Genome Wide Selection Scan of H12 Values across Chromosome {chrom}')
-    plt.legend()
-    # Save the plot
-    filename = f'darlingi_etofenprox_phenotyped_H12_chromosome_{chrom}.png'
-    plt.savefig(filename, dpi=300)  # Save with high resolution
-    # Display the plot
-    plt.show()
-
-
-
-
-
-
-
-
-
 
 
 
