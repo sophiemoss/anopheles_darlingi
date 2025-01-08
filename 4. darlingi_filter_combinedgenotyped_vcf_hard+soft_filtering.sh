@@ -200,3 +200,16 @@ bcftools query -f '%CHROM\t%POS\n' phenotyped_darlingi_filtered_phased.vcf.gz | 
 snpEff Anopheles_darlingi F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.vcf.gz > F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.ann.vcf
 bgzip F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.ann.vcf
 tabix -p vcf F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.ann.vcf.gz
+
+## Check the number of SNPs in the Rondonia Samples and the number of SNPs in the Colony Samples
+# Colony samples vcf
+
+colony_old_F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
+
+bcftools filter -e 'AC==0' -Oz -o colony_samples_only_SNPS.vcf.gz colony_old_F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
+
+# Rondonia samples vcf
+
+rondonia_samples_F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz
+
+bcftools filter -e 'AC==0' -Oz -o rondonia_samples_only_SNPS.vcf.gz rondonia_samples_F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz

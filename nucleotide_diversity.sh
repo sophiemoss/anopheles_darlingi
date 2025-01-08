@@ -39,4 +39,52 @@ vcftools --gzvcf rondonia_samples_darlingi_filtered_phased.vcf.gz --TajimaD 2000
 # average Tajima D for Rondonia samples is -0.8265081070855008 
 
 
+### Nucleotide diversity of each of the insecticide resistance genes
 
+for i in $(ls *nov2022.vcf.gz);do vcftools --gzvcf $i --window-pi 100 --out ${i}_nuc_div_window_100bp;done
+
+# awk 'NR>1 { total += $5; count++ } END { print total/count }' colony_old_nuc_div_window_10kb.windowed.pi
+
+for i in $(ls *100bp.windowed.pi);do awk 'NR>1 { total += $5; count++ } END { print total/count }' ${i};done
+
+## ace1_filtered_darlingi.genotyped.vcf.gz
+## gste2_filtered_darlingi.genotyped.vcf.gz
+## rdl_filtered_darlingi.genotyped.vcf.gz
+## vgsc_filtered_darlingi.genotyped.vcf.gz
+
+## 10kb
+## 0.00174296
+## 0.000648732
+## 0.00121218
+## 0.000034918 (3.4918e-05)
+
+## 1kb
+## 0.00183753
+## 0.00216919
+## 0.00151859
+## 0.000149703
+
+## 100bp
+## 0.00470835
+## 0.00408327
+## 0.00392453
+## 0.001167
+
+## Compare with anopheles gambiae nucleotide diversity
+## 100 bp
+## 0.0121631
+## 0.0108121
+## 0.0164783
+## 0.00601022
+
+## Calculate for only Rondonia wild-caught samples
+## Subset vcf for wild-caught samples 
+ls -lh *wild_caught_rondonia_darlingi.vcf.gz
+
+for i in $(ls *wild_caught_rondonia_darlingi.vcf.gz);do vcftools --gzvcf $i --window-pi 100 --out ${i}_nuc_div_window_100bp;done
+for i in $(ls *100bp.windowed.pi);do awk 'NR>1 { total += $5; count++ } END { print total/count }' ${i};done
+
+## ace1 0.00439764
+## gste2 0.00347193
+## rdl 0.00375841
+## vgsc 0.00137991
