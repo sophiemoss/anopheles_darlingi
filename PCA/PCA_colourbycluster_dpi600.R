@@ -8,8 +8,8 @@ showtext_auto()
 library(viridis)
 library(scales)
 
-workdir <- "/mnt/storage11/sophie/darlingi/holly_wgs_paper/pca" # Working directory with plink files
-prefix <- "X_only_darlingi" # Prefix for plink files
+workdir <- "/mnt/storage11/sophie/darlingi/holly_wgs_paper/pca_rondonia_only" # Working directory with plink files
+prefix <- "mito_only_rondonia_darlingi" # Prefix for plink files
 metadata <- "/mnt/storage11/sophie/darlingi/holly_wgs_paper_metadatav2.csv" # File path to metadata
 
 calc_variance_explained <- function(pc_points) {
@@ -55,10 +55,10 @@ color_by <- "population" # specify if colored by region or country
 my_colours <- c("Rondonia State" = "#7678ed", "Colony old" = "darkorange2")
 
 # plot
-png("X_only_PCA_coloured_by_population_dpi_600.png", width = 7000, height = 7000, res = 600) 
+png("mito_only_PCA_coloured_by_population_dpi_600.png", width = 7000, height = 7000, res = 600) 
 ggplot(data = df, aes(x = PC1, y = PC2, color = !!sym(color_by))) +
     geom_point(size = 5) +
-    labs(x = paste0("PC1", " (", vars["PC1"], "%)"), y = paste0("PC2", " (", vars["PC2"], "%)"), title = "Chromosome X", color = "Population") +
+    labs(x = paste0("PC1", " (", vars["PC1"], "%)"), y = paste0("PC2", " (", vars["PC2"], "%)"), title = "Mitochondrial genome", color = "Population") +
     scale_color_manual(values = my_colours, labels = c("Rondonia_State" = "Rondonia State", "Colony_old" = "Colony")) +
     scale_x_continuous(labels = label_number()) +
     scale_y_continuous(labels = label_number()) +
