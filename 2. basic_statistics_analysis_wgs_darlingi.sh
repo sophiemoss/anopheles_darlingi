@@ -15,7 +15,7 @@ ls *.g.vcf.gz | sed 's/.g.vcf.gz//' > fastq2vcfsamples.txt
 # The code below is saying show the first line (head -n 1) and extract the first item (print $1)
 # It creates a list (total_reads) of the number for all samples in the order of the sample list
 
-ls *.mkdup.bamstats | xargs -i -P1 sh -c 'head -1 {} | awk -F '"'"' '"'"' '"'"'{print $1}'"'"'' > total_reads
+ls *.mkdup.bam.bamstats | xargs -i -P1 sh -c 'head -1 {} | awk -F '"'"' '"'"' '"'"'{print $1}'"'"'' > total_reads
 
 # Number of reads mapping to reference genome
 # Same principle, but extracting the first item on the 7th line
