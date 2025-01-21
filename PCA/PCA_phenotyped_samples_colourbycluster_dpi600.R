@@ -9,7 +9,7 @@ library(viridis)
 library(scales)
 
 workdir <- "/mnt/storage11/sophie/darlingi/phenotype_darlingi_paper/phenotyped_colony/pca" # Working directory with plink files
-prefix <- "3_only_darlingi_phenotyped" # Prefix for plink files
+prefix <- "mito_only_darlingi_phenotyped" # Prefix for plink files
 metadata <- "/mnt/storage11/sophie/darlingi/phenotype_darlingi_paper/darlingi_resistance_metadata.csv" # File path to metadata
 
 calc_variance_explained <- function(pc_points) {
@@ -52,13 +52,13 @@ color_by <- "pyrethroid_resistance_status" # specify if colored by region or cou
 
 ## changing colour scheme to be with viridis, with color_by being a discrete variable
 
-my_colours <- c("susceptible" = "#6f9c3d", "resistant" = "#fe6b40")
+my_colours <- c("susceptible" = "#DDA0DD", "resistant" = "#0000FF")
 
 # plot
-png("3_only_phenotyped_PCA_coloured_by_population_dpi_600.png", width = 7000, height = 7000, res = 600) 
+png("mito_only_phenotyped_PCA_coloured_by_population_dpi_600.png", width = 7000, height = 7000, res = 600) 
 ggplot(data = df, aes(x = PC1, y = PC2, color = !!sym(color_by))) +
     geom_point(size = 5) +
-    labs(x = paste0("PC1", " (", vars["PC1"], "%)"), y = paste0("PC2", " (", vars["PC2"], "%)"), title = "Chromosome 3", color = "Population") +
+    labs(x = paste0("PC1", " (", vars["PC1"], "%)"), y = paste0("PC2", " (", vars["PC2"], "%)"), title = "Mitochondrial genome", color = "Population") +
     scale_color_manual(values = my_colours, labels = c("susceptible" = "Pyrethroid susceptible", "resistant" = "Pyrethroid resistant")) +
     scale_x_continuous(labels = label_number()) +
     scale_y_continuous(labels = label_number()) +
