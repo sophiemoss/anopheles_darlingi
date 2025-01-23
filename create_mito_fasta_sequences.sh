@@ -8,7 +8,7 @@
 # samtools faidx AnoDarl_H01.genomic.fasta NC_064612.1 > AnoDarl_H01_NC_064612.1.fasta
 
 # Input multi-sample VCF file
-multi_sample_vcf="renamedchr_F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.vcf.gz"
+multi_sample_vcf="mito_only_phenotyped_darlingi_filtered_unphased_mltree_renamed.vcf.gz"
 
 # Output directory for gVCF files
 output_dir="gvcf_output"
@@ -32,7 +32,7 @@ while read -r sample; do
     bcftools index "$output_dir/${sample}.vcf.gz"
 
     # Create consensus sequence
-    bcftools consensus -f AnoDarl_H01.genomic.chromosomesonly.fasta "$output_dir/${sample}.vcf.gz" |
+    bcftools consensus -f AnoDarl_H01_NC_064612.1.fasta "$output_dir/${sample}.vcf.gz" |
     tr '*' 'N' |
     sed "1s/^>.*/>$sample/" > "$output_dir/${sample}_consensus.fasta"
 done
@@ -40,6 +40,6 @@ done
 echo "Processing completed."
 
 # Concatenate the fasta files into one file
-cat "$output_dir"/*_consensus.fasta > allsamples_consensus_wholegenome.fasta
+cat "$output_dir"/*_consensus.fasta > darlingi_phenotyped_samples_consensus_mitochondria.fasta
 
 echo "Concatenated fasta files for each sample to produce allsamples_consensus_wholegenome.fasta"
