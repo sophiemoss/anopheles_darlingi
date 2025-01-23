@@ -67,9 +67,8 @@ label_id <- opt$label_id
 label_country <- opt$label_country
 label_region <- opt$label_region
 label_site <- opt$label_site
-label_resistance <- "pyrethroid_resistance_status"
 
-met_cols <- c(label_id, label_region, label_country, label_site, label_resistance)
+met_cols <- c(label_id, label_region, label_country, label_site)
 
 pals <- c("#7678ed", "darkorange2", "#f18701", "#f7b801","#f35b04")
 

@@ -27,14 +27,25 @@ plink --vcf admixture_modified.vcf.gz --set-missing-var-ids @:# --keep-allele-or
 cat K_runs.txt | xargs -I {} sh -c 'admixture --cv=10 -j20 -s 82645 darlingi_phenotyped.bed {} | tee log{}.cv10.seed14062.out'
 
 # Inspected inflection point with 
-# grep -h CV *out, and K = 2
+# grep -h CV *out, and K = 1
+
+# CV error (K=10): 0.84149
+# CV error (K=1): 0.48912
+# CV error (K=2): 0.50858
+# CV error (K=3): 0.54359
+# CV error (K=4): 0.56919
+# CV error (K=5): 0.59600
+# CV error (K=6): 0.63277
+# CV error (K=7): 0.70947
+# CV error (K=8): 0.74807
+# CV error (K=9): 0.79845
 
 # Plot admixture
 conda create -n radmix r-essentials r-base
 install.packages(c("unikn", "countrycode", "optparse"))
-setwd("/mnt/storage11/sophie/darlingi/darlingi_database")
+setwd("/mnt/storage11/sophie/darlingi/phenotype_darlingi_paper/phenotyped_colony/admixture")
 
-Rscript /mnt/storage11/sophie/gitrepos/anopheles_darlingi/admixture/generate_admix_barplot_colours_v2_phenopaper.R \
+Rscript /mnt/storage11/sophie/gitrepos/anopheles_darlingi/admixture/generate_admix_barplot_colours_v2_hollywgspaper.R \
 -d /mnt/storage11/sophie/darlingi/phenotype_darlingi_paper/phenotyped_colony/admixture \
 --prefix darlingi_phenotyped \
 --kval 1 \
