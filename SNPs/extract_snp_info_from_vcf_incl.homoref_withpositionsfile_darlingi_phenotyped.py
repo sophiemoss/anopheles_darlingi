@@ -1,14 +1,14 @@
 # %% 
 import subprocess
 import pandas as pd
-working_directory = "/mnt/storage11/sophie/darlingi/phenotype_darlingi_paper/phenotyped_colony/SNPs"
+working_directory = "/mnt/storage11/sophie/darlingi/holly_wgs_paper/SNPs"
 #os.chdir(working_directory)
 
 # %% Define the input file with positions (CHR and POS)
-vcf_filename = "renamedchr_F_MISSING_MAF_AC0_DP5_GQ20_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi_phenotyped.genotyped.ann.vcf.gz"  
+vcf_filename = "renamedchr_F_MISSING_MAF_AC0_DP5_GQ15_gatk_filtered_minac_filtrenamedchr_bi_snps_darlingi.genotyped.ann.vcf.gz"  # Replace with your VCF file path
 
 # %% Define the input file with gene positions
-positions_file = "four_key_genes_of_interest_positions.txt"
+positions_file = "/mnt/storage11/sophie/darlingi/holly_wgs_paper/SNPs/additional_genes_of_interest.txt"
 
 # %% Prepare a list to collect data
 data = []
@@ -18,8 +18,8 @@ with open(positions_file, "r") as infile:
     next(infile)  # Skip header line
     for line in infile:
         columns = line.strip().split("\t")
-        if len(columns) >= 5:
-            gene, chr, start, stop, genename = columns
+        if len(columns) >= 4:
+            gene, chr, start, stop = columns
 
             # Define the bcftools command
             cmd = f'bcftools query -r {chr}:{start}-{stop} -f"%CHROM\t%POS\t%REF\t%ALT\t%FILTER\t%INFO\t[%SAMPLE:%GT;]\n" {vcf_filename}'
@@ -61,7 +61,7 @@ with open(positions_file, "r") as infile:
 df = pd.DataFrame(data, columns=["Gene", "Chrom", "Position", "Ref", "Alt", "Filter", "Info", "SamplesWithGenotypes"])
 
 # %% Optionally, save the DataFrame to a file
-output_file = "snp_info_darlingi_phenotyped_ace1_updated.csv"
+output_file = "additional_gene_snp_info_from_annotated_vcf_ace1updated.csv"
 df.to_csv(output_file, index=False)
 print("DataFrame created and saved.")
 

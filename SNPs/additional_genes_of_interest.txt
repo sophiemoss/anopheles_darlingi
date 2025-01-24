@@ -1,0 +1,135 @@
+Gene	Chr	Start	Stop
+cytochrome P450 4g15-like	NC_064873.1	632903	635375
+cytochrome c oxidase subunit 6A, mitochondrial	NC_064873.1	1972380	1973172
+glutathione S-transferase theta-1-like	NC_064873.1	2088021	2089228
+glutathione S-transferase theta-1-like	NC_064873.1	2089302	2090420
+probable cytochrome P450 9f2	NC_064873.1	2238189	2240602
+glutathione S-transferase 1-1	NC_064873.1	2531491	2532649
+cytochrome P450 315a1, mitochondrial	NC_064873.1	2801635	2804318
+acetylcholinesterase	NC_064873.1	3827776	3844311
+ace1_updated	NC_064874.1	15669736	15689194	
+cytochrome c oxidase subunit 7A, mitochondrial-like	NC_064873.1	4937691	4938613
+NADPH--cytochrome P450 reductase	NC_064873.1	6081052	6090177
+cytochrome P450 307a1	NC_064873.1	9636820	9642799
+microsomal glutathione S-transferase 1-like	NC_064873.1	9693966	9695893
+microsomal glutathione S-transferase 1-like	NC_064873.1	9696251	9698232
+cytochrome P450 4c3-like	NC_064873.1	9850285	9854102
+cytochrome P450 4c3-like	NC_064873.1	9855925	9860145
+cytochrome P450 4c3-like	NC_064873.1	9863506	9870011
+cytochrome P450 4c3-like	NC_064873.1	9877139	9885690
+cytochrome P450 4d2-like	NC_064873.1	10290805	10292337
+cytochrome P450 4d2-like	NC_064873.1	10293212	10304022
+cytochrome P450 4g15	NC_064873.1	10601813	10608052
+gamma_aminobutyric_acid_receptor_subunit_beta_like	NC_064873.1	12156076	12160219
+gamma_aminobutyric_acid_receptor_subunit_alpha_6	NC_064873.1	12162470	12167858
+glutathione S-transferase 1-1-like	NC_064874.1	458406	459616
+probable cytochrome P450 4aa1	NC_064874.1	1856609	1861265
+cytochrome P450 9c1-like	NC_064874.1	7227268	7229126
+cytochrome P450 6a2-like	NC_064874.1	8548234	8550027
+probable cytochrome P450 6a14	NC_064874.1	8550286	8552384
+cytochrome P450 6a2-like	NC_064874.1	8552508	8554260
+probable cytochrome P450 6a14	NC_064874.1	8555220	8557008
+probable cytochrome P450 6a14	NC_064874.1	8558523	8560347
+probable cytochrome P450 6a14	NC_064874.1	8570241	8572153
+cytochrome P450 4d2-like	NC_064874.1	14301167	14303420
+probable cytochrome P450 4d14	NC_064874.1	14389189	14390782
+cytochrome P450 4d2-like	NC_064874.1	14389419	14396961
+cytochrome P450 4d2-like	NC_064874.1	14391998	14393297
+cytochrome P450 4d2-like	NC_064874.1	14397113	14399073
+cytochrome P450 4d1-like	NC_064874.1	14744654	14747827
+cytochrome P450 4d1-like	NC_064874.1	14749377	14752052
+cytochrome P450 4d2-like	NC_064874.1	14752846	14755113
+cytochrome P450 4d2-like	NC_064874.1	14755405	14757515
+cytochrome P450 4d2-like	NC_064874.1	14757530	14761468
+cytochrome P450 4g15-like	NC_064874.1	15510516	15511800
+cytochrome P450 4g15-like	NC_064874.1	15514125	15516425
+acetylcholinesterase	NC_064874.1	15678543	15682194
+gamma_aminobutyric_acid_type_B_receptor_subunit_2	NC_064874.1	24659254	24670162
+cytochrome P450 4C1-like	NC_064874.1	26305311	26308136
+cytochrome P450 4c21-like	NC_064874.1	27833488	27835912
+glutathione S-transferase 1-1-like	NC_064874.1	33158361	33159198
+glutathione S-transferase D5-like	NC_064874.1	33159500	33160518
+glutathione S-transferase D5-like	NC_064874.1	34223184	34223924
+glutathione S-transferase 1-like	NC_064874.1	34225316	34226046
+glutathione S-transferase 1-like	NC_064874.1	34227180	34227839
+glutathione S-transferase 1-like	NC_064874.1	34228110	34228848
+glutathione S-transferase 2-like	NC_064874.1	34429212	34429889
+glutathione S-transferase 1	NC_064874.1	34432316	34436864
+glutathione S-transferase 1-like	NC_064874.1	34432988	34433677
+glutathione S-transferase D7	NC_064874.1	34441183	34445115
+cytochrome P450 4c21-like	NC_064874.1	36273001	36275112
+cytochrome P450 4C1-like	NC_064874.1	36277306	36279571
+cytochrome P450 4C1-like	NC_064874.1	36280532	36282092
+cytochrome P450 4c21-like	NC_064874.1	36284307	36289300
+probable cytochrome P450 28a5	NC_064874.1	39698531	39700268
+probable cytochrome P450 304a1	NC_064874.1	45275150	45276860
+probable cytochrome P450 304a1	NC_064874.1	45277538	45279623
+probable cytochrome P450 304a1	NC_064874.1	45279566	45283068
+cytochrome P450 4c21-like	NC_064874.1	46074906	46077305
+cytochrome P450 4C1-like	NC_064874.1	46079381	46081483
+gamma_aminobutyric_acid_receptor_associated_protein	NC_064874.1	48111223	48113801
+glutathione peroxidase-like	NC_064874.1	49746081	49747799
+cytochrome P450 18a1	NC_064874.1	52080617	52084363
+cytochrome P450 306a1	NC_064874.1	52085804	52088794
+gamma_aminobutyric_acid_type_B_receptor_subunit_1	NC_064874.1	52252066	52257858
+probable cytochrome P450 303a1	NC_064874.1	55634658	55636389
+cytochrome P450 4C1-like	NC_064874.1	60766111	60768576
+cytochrome P450 4C1-like	NC_064874.1	60934048	60943346
+acetylcholinesterase	NC_064874.1	63296758	63307470
+cytochrome c oxidase subunit 6C-1	NC_064874.1	64982176	64982953
+cytochrome P450 CYP12A2-like	NC_064874.1	66313543	66315600
+cytochrome P450 CYP12A2-like	NC_064874.1	66316112	66323108
+probable cytochrome P450 12a5, mitochondrial	NC_064874.1	66319212	66326470
+cytochrome P450 307a1-like	NC_064874.1	71806805	71808582
+gamma_aminobutyric_acid_type_B_receptor_subunit_2	NC_064874.1	72980807	72985115
+probable cytochrome P450 6a20	NC_064874.1	79320659	79322660
+probable cytochrome P450 6a13	NC_064874.1	79322654	79324408
+cytochrome P450 6A1-like	NC_064874.1	79324435	79326352
+cytochrome P450 6a8-like	NC_064874.1	79326680	79328605
+cytochrome P450 6a2-like	NC_064874.1	79328824	79332651
+probable cytochrome P450 6a17	NC_064874.1	79333519	79335445
+probable cytochrome P450 6a23	NC_064874.1	79335563	79337201
+cytochrome P450 6A1-like	NC_064874.1	79337279	79338862
+probable cytochrome P450 6a23	NC_064874.1	79340040	79341763
+cytochrome P450 6a8-like	NC_064874.1	79342096	79343958
+probable cytochrome P450 6a23	NC_064874.1	79344317	79346120
+glutathione S-transferase 1-like	NC_064874.1	85864944	85866692
+glutathione S-transferase 1-like	NC_064874.1	89822948	89823926
+glutathione S-transferase 1-like	NC_064874.1	89823854	89824776
+gste2	NC_064874.1	89825304	89827998
+glutathione S-transferase 1-like	NC_064874.1	89829335	89830215
+cytochrome P450 4C1-like	NC_064874.1	90386037	90387759
+cytochrome P450 4C1-like	NC_064874.1	90390014	90391724
+cytochrome P450 4c3-like	NC_064874.1	90435150	90437087
+cytochrome b5-like	NC_064874.1	90561782	90563113
+probable cytochrome P450 9f2	NC_064874.1	91682385	91684135
+probable cytochrome P450 9f2	NC_064874.1	91684577	91686552
+cytochrome c-2	NC_064874.1	94131633	94133123
+succinate dehydrogenase cytochrome b560 subunit, mitochondrial-like	NC_064875.1	3098403	3099327
+probable cytochrome P450 6a13	NC_064875.1	5372396	5373998
+probable cytochrome P450 6a13	NC_064875.1	5375193	5379990
+probable cytochrome P450 9f2	NC_064875.1	8049223	8051198
+probable cytochrome P450 9f2	NC_064875.1	8063651	8071483
+probable cytochrome P450 9f2	NC_064875.1	8065565	8067521
+probable cytochrome P450 9f2	NC_064875.1	8068783	8070584
+cytochrome P450 9e2-like	NC_064875.1	8071660	8073628
+gamma_aminobutyric_acid_receptor_alpha_like	NC_064875.1	23386750	23409499
+microsomal glutathione S-transferase 1-like	NC_064875.1	25252521	25253001
+cytochrome P450 6g1-like	NC_064875.1	27135288	27144377
+cytochrome P450 6a2-like	NC_064875.1	27196486	27198428
+glutathione S-transferase	NC_064875.1	31006752	31011623
+sodium_channel_protein_para	NC_064875.1	35305908	35339285
+probable cytochrome P450 313a4	NC_064875.1	46108799	46110356
+probable cytochrome P450 313a4	NC_064875.1	46112458	46114023
+cytochrome P450 3A19-like	NC_064875.1	46114443	46116113
+probable cytochrome P450 313a1	NC_064875.1	46118005	46118634
+probable cytochrome P450 4ac1	NC_064875.1	48317034	48319288
+probable cytochrome P450 4ac1	NC_064875.1	48325363	48327322
+gamma_aminobutyric_acid_receptor_subunit_beta	NC_064875.1	53378544	53446631
+probable cytochrome P450 305a1	NC_064875.1	64255984	64257836
+probable cytochrome P450 305a1	NC_064875.1	64258200	64260795
+probable cytochrome P450 308a1	NC_064875.1	66235748	66238127
+cytochrome P450 302a1, mitochondrial	NC_064875.1	68020602	68022694
+probable cytochrome P450 49a1	NC_064875.1	69048518	69059009
+acetylcholinesterase___like	NC_064875.1	69156909	69162198
+probable cytochrome P450 301a1, mitochondrial	NC_064875.1	69864956	69870954
