@@ -12,7 +12,6 @@ ls *.mkdup.bam | sed 's/.bam//' > delly_all_samples.txt
 
 for f in *.mkdup.bam; do delly call -t ALL -g AnoDarl_H01.genomic.fasta "$f" -o "${f%.*}.all.bcf"; done
 
-# got to here
 delly merge -o structural_variants.bcf *.all.bcf
 
 bcftools view structural_variants.bcf > structural_variants.vcf
