@@ -1,13 +1,13 @@
 import re
 
 # Define file paths
-dups_file = "dups_to_investigate.txt"
+dups_file = "phenotype_dups_to_investigate.txt"
 gff_file = "GCF_943734745.1_idAnoDarlMG_H_01_genomic.gff"
-output_file = "gene_products_output.txt"
+output_file = "gene_products_output_2.txt"
 
 def extract_unique_genes(annotation_line):
     """Extract unique gene names from a SNPEFF annotation line."""
-    gene_pattern = re.compile(r"LOC[a-zA-Z0-9_.-]+")
+    gene_pattern = re.compile(r"LOC\d+|XM_[0-9]+\.[0-9]+")
     return set(gene_pattern.findall(annotation_line))
 
 def find_gene_product_in_gff(gene_name, gff_content):
@@ -39,7 +39,7 @@ def process_files(dups_file, gff_file, output_file):
             line = line.strip()
 
             # Check if the line contains Chr and Pos
-            chr_pos_match = re.match(r"Chr\s+(\S+)\s+Pos\s+(\d+)", line)
+            chr_pos_match = re.match(r"(\S+)\s+(\d+)", line)
             if chr_pos_match:
                 # Process buffered annotations for the previous Chr and Pos
                 if chr_pos and annotation_buffer:
