@@ -12,6 +12,7 @@ import zarr
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import sys
 import gffutils
 
 # %% set wd
@@ -34,9 +35,9 @@ print(gt.shape)
 
 # %%
 ## import metadata
-df_samples=pd.read_csv('/mnt/storage11/sophie/darlingi/darlingi_resistance_metadata.csv',sep=',',usecols=['sample','population','region','country','site','resistance_status'])
+df_samples=pd.read_csv('/mnt/storage11/sophie/darlingi/phenotype_darlingi_paper/darlingi_resistance_metadata.csv',sep=',',usecols=['sample','population','region','country','site','resistance_status', 'pyrethroid_resistance_status'])
 df_samples.head()
-df_samples.groupby(by=['resistance_status']).count
+df_samples.groupby(by=['pyrethroid_resistance_status']).count
 
 # %%
 ## VCF is phased so we can convert genotype arrays made earlier to haplotype array
@@ -46,8 +47,7 @@ sample_ids = callset['samples'][:]
 # %% Create arrays needed for pyrethroid resistant samples
 # Get sample identifiers for pyrethroid_res samples from df_samples
 pyrethroid_res_sample_ids = df_samples[
-    (df_samples['resistance_status'] == 'alpha-cypermethrin-resistant') | 
-    (df_samples['resistance_status'] == 'etofenprox-resistant')
+    (df_samples['pyrethroid_resistance_status'] == 'resistant')
 ]['sample'].values
 
 # Find indices of these samples in the genotype array
@@ -60,8 +60,7 @@ gt_pyrethroid_res_samples = gt.take(pyrethroid_res_indices, axis=1)
 # %% Create arrays needed for pyrethroid susceptible samples
 # Get sample identifiers for pyrethroid_sus samples from df_samples
 pyrethroid_sus_sample_ids = df_samples[
-    (df_samples['resistance_status'] == 'alpha-cypermethrin-susceptible') | 
-    (df_samples['resistance_status'] == 'etofenprox-susceptible')
+    (df_samples['pyrethroid_resistance_status'] == 'susceptible')
 ]['sample'].values
 
 # Find indices of these samples in the genotype array
@@ -198,6 +197,180 @@ ax.set_ylabel('XP-EHH')
 plt.tight_layout()
 plt.savefig('xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
 
+
+# %% Run iterations
+
+permuted_xpehh_values = []
+for i in range(20):
+    # Get the indices from df_samples
+    df_res_sus_samples = df_samples[df_samples.pyrethroid_resistance_status.isin(['resistant', 'susceptible'])]
+    indices = df_res_sus_samples.index.tolist()
+    # Shuffle the indices
+    np.random.shuffle(indices)
+    # Split the indices into two groups
+    half_length = len(indices) // 2
+    pop1_indices = indices[:half_length]
+    pop2_indices = indices[half_length:]
+   
+    # make new genotype arrays from permutations
+    gt_pop1 = gt.take(pop1_indices, axis =1)
+    gt_pop2 = gt.take(pop2_indices, axis =1)
+
+    # create the new haplotype arrays
+    h_pop1 = gt_pop1.to_haplotypes().compute()
+    h_pop2 = gt_pop2.to_haplotypes().compute()
+
+    # check that pos and genotype are the same size
+    if len(pos)==len(gt_pop1):
+        print("Length of positions and genotypes in the genotype array are the same, script continuing")
+    else:
+        print("Something is wrong with the genotype_all array as the length of pos_all and genotype_all are different. Stopping script.")
+        sys.exit()  # This will stop the script. If you want the script to continue anyway, # out this line
+    
+    # Calcalate and plot xpehh for iteration
+    xpehh_raw_iterated = allel.xpehh(h_pop1, h_pop2, pos, use_threads=True)
+    print(f"Calculated xpehh using allel.xpehh for permutation {i}")
+
+    # Standardize the xpehh values for the iteration
+    xpehh_std_iterated = allel.standardize_by_allele_count(xpehh_raw_iterated, allele_counts_array[:, 1])
+    
+    # Store the standardised xp-ehh values for this iteration
+    permuted_xpehh_values.append((xpehh_std_iterated))
+
+# Notify of finishing permutations
+print("Permutations calculated")
+
+#%% 
+permuted_xpehh_values_df = pd.DataFrame(permuted_xpehh_values)
+# Save permuted_xpehh_values as a csv so that you do not need to calculate again if taking a break in analysis
+permuted_xpehh_values_df.to_csv(f'permuted_xpehh_values.csv', index=False)
+
+#%% Plot the iterated XP-EHH values
+
+# Set up the plot
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Ensure that pos, chrom, and xpehh_std are all numpy arrays to support advanced indexing
+pos = np.array(callset['variants/POS'][:])
+chrom = np.array(callset['variants/CHROM'][:])
+xpehh_standardised_iterated_values = np.array(xpehh_std_iterated[0])
+
+# Define colors for each chromosome (for illustration)
+chromosome_colours = {
+    '2': 'grey', '3': 'lightgrey', 'anop_mito': 'lightgrey', 'anop_X': 'grey'
+}
+
+# Create a list to hold the legend patches
+legend_patches = []
+
+# Filtered chromosomes list, assuming cumulative_lengths are defined for these
+filtered_chroms = ['2', '3', 'anop_X', 'anop_mito']
+
+# Iterate through each chromosome to plot its variants
+for unique_chrom in filtered_chroms:
+    chrom_mask = chrom == unique_chrom
+    
+    chrom_positions = pos[chrom_mask]
+    chrom_xpehh_values = xpehh_standardised_iterated_values[chrom_mask]
+    
+    non_nan_mask = ~np.isnan(chrom_xpehh_values)
+    chrom_positions_no_nan = chrom_positions[non_nan_mask]
+    chrom_xpehh_values_no_nan = chrom_xpehh_values[non_nan_mask]
+    
+    adjusted_positions = chrom_positions_no_nan + cumulative_lengths.get(unique_chrom, 0)
+
+    # Conditions for plotting
+    solid_mask = (chrom_xpehh_values_no_nan >= susceptible_threshold) | (chrom_xpehh_values_no_nan <= resistant_threshold)
+    faded_mask = ~solid_mask
+    
+    # Plot solid points for values above 5 or below -5
+    ax.scatter(adjusted_positions[solid_mask], 
+               chrom_xpehh_values_no_nan[solid_mask], 
+               color=chromosome_colours[unique_chrom], alpha=1.0, s=10)
+    
+    # Plot faded points for other values
+    ax.scatter(adjusted_positions[faded_mask], 
+               chrom_xpehh_values_no_nan[faded_mask], 
+               color=chromosome_colours[unique_chrom], alpha=0.1, s=10)
+# Set labels
+ax.set_xlabel('Genomic Position (bp)')
+ax.set_ylabel('XP-EHH value')
+plt.tight_layout()
+plt.savefig('permuted_only_xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
+
+#%% ######
+#  Initialize an array to store the 99th percentile and window information
+# Convert permuted XP-EHH values to a NumPy array
+permuted_xpehh_values_array = np.array(permuted_xpehh_values)
+
+# Compute the 99th percentile across permutations for each variant position
+percentile_99th_values = np.nanpercentile(permuted_xpehh_values_array, 99, axis=0)
+
+# Notify of completion
+print("Calculated 99th percentile values for each variant position")
+
+# %% Now compare the actual standardized XpEHH value to the computed 99th percentile
+
+# Identify significant positions
+significant_positions = pos[xpehh_std[0] > percentile_99th_values]
+
+# Extract corresponding XP-EHH values
+significant_xpehh_values = xpehh_std[0][xpehh_std[0] > percentile_99th_values]
+
+# Create DataFrame of significant results
+significant_variants_df = pd.DataFrame({
+    'Position': significant_positions,
+    'XP-EHH': significant_xpehh_values,
+    'Threshold_99th': percentile_99th_values[xpehh_std[0] > percentile_99th_values]
+})
+
+# Save results
+significant_variants_df.to_csv('significant_xpehh_variants.csv', index=False)
+
+# Display to user
+import ace_tools as tools
+tools.display_dataframe_to_user(name="Significant XP-EHH Variants", dataframe=significant_variants_df)
+
+
+# %% Visualise significant variants
+
+# Plot the XP-EHH values with the 99th percentile threshold
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Scatter plot of all XP-EHH values
+ax.scatter(pos, xpehh_std[0], alpha=0.3, label="All XP-EHH values", s=5)
+
+# Highlight significant variants
+ax.scatter(significant_positions, significant_xpehh_values, color='red', label="Significant (99th percentile)", s=10)
+
+# Add the 99th percentile threshold line
+ax.axhline(y=np.nanmax(percentile_99th_values), color='black', linestyle='--', label="99th Percentile Threshold")
+
+# Labels and legend
+ax.set_xlabel('Genomic Position (bp)')
+ax.set_ylabel('Standardized XP-EHH')
+ax.legend()
+plt.title('XP-EHH with Significant Variants')
+
+# Save plot
+plt.savefig('xpehh_significant_variants_plot.png', dpi=600)
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # %% list all positions with xpehh value over or below a certain threshold
 
 susceptible_threshold_mask = xpehh_standardised_values >= susceptible_threshold
@@ -225,6 +398,32 @@ df_significant_sus_xpehh.to_csv(f'df_allpyrethroids_significant_sus_xpehh_suscep
 df_significant_res_xpehh.to_csv(f'df_allpyrethroids_significant_res_xpehh_resistant_threshold_{resistant_threshold}.csv', index=False)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Annotations ###
 # %% Annotate the Susceptible XPEHH file
 
 print("Using GFF file to bring in annotations for these positions")
