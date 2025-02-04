@@ -3,6 +3,7 @@
 ## Compute the unstandardized cross-population extended haplotype homozygosity score (XPEHH) for each variant.
 ## allel.xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False, gap_scale=20000, max_gap=200000, is_accessible=None, use_threads=True)
 # create h1 and h2, selecting all variants instead of segregating variants only, which is what we did in iHS
+# xpehh is calculated for every single variant
 
 # %%
 import os
@@ -103,19 +104,18 @@ ax.set_ylabel('Frequency (no. variants)');
 
 # %% standardise xpehh-raw
 
-allele_counts_array = gt.count_alleles(max_allele=3).compute()
-xpehh_std = allel.standardize_by_allele_count(xpehh_raw, allele_counts_array[:, 1])
+#allele_counts_array = gt.count_alleles(max_allele=3).compute()
+#xpehh_std = allel.standardize_by_allele_count(xpehh_raw, allele_counts_array[:, 1])
 
 # %% plot standardised xp-ehh values
 
-fig, ax = plt.subplots()
-ax.hist(xpehh_std[0][~np.isnan(xpehh_std[0])], bins=20)
-ax.set_xlabel('Raw XP-EHH')
-ax.set_ylabel('Frequency (no. variants)');
+# fig, ax = plt.subplots()
+# ax.hist(xpehh_std[0][~np.isnan(xpehh_std[0])], bins=20)
+# ax.set_xlabel('Raw XP-EHH')
+# ax.set_ylabel('Frequency (no. variants)');
 
-# %% Plot standardized xp-ehh
 
-# define chromosome lengths and colours 
+#%% Plot raw XP-EHH, define chromosome lengths and colours 
 chromosome_lengths = {
     '2': 94951917,
     '3': 71270736,
@@ -130,21 +130,21 @@ for chrom, length in chromosome_lengths.items():
     cumulative_lengths[chrom] = cumulative_length
     cumulative_length += length
 
-# %% Plot XP-EHH
+# %% Plot rawXP-EHH
 
-# Set threshold
+# Set thresholds
 susceptible_threshold = 5
 resistant_threshold = -5
 
 # Set up the plot
 fig, ax = plt.subplots(figsize=(10, 6))
 
-# Ensure that pos, chrom, and xpehh_std are all numpy arrays to support advanced indexing
+# Ensure that pos, chrom, and xpehh_values are all numpy arrays
 pos = np.array(callset['variants/POS'][:])
 chrom = np.array(callset['variants/CHROM'][:])
-xpehh_standardised_values = np.array(xpehh_std[0])
+xpehh_values = np.array(xpehh_raw)
 
-# Define colors for each chromosome (for illustration)
+# Define colors for each chromosome
 chromosome_colours = {
     '2': '#3d348b', '3': '#f7b801', 'anop_mito': '#f35b04', 'anop_X': '#119DA4'
 }
@@ -152,41 +152,44 @@ chromosome_colours = {
 # Create a list to hold the legend patches
 legend_patches = []
 
-# Filtered chromosomes list, assuming cumulative_lengths are defined for these
+# List of chromosomes to plot
 filtered_chroms = ['2', '3', 'anop_X', 'anop_mito']
 
 # Iterate through each chromosome to plot its variants
 for unique_chrom in filtered_chroms:
     chrom_mask = chrom == unique_chrom
     
-    chrom_positions = pos[chrom_mask]
-    chrom_xpehh_values = xpehh_standardised_values[chrom_mask]
+    chrom_positions = pos[chrom_mask]  # Keep all positions
+    chrom_xpehh_values = xpehh_values[chrom_mask]  # Keep all XP-EHH values
     
-    non_nan_mask = ~np.isnan(chrom_xpehh_values)
-    chrom_positions_no_nan = chrom_positions[non_nan_mask]
-    chrom_xpehh_values_no_nan = chrom_xpehh_values[non_nan_mask]
-    
-    adjusted_positions = chrom_positions_no_nan + cumulative_lengths.get(unique_chrom, 0)
+    # Adjust positions to be cumulative (if necessary)
+    adjusted_positions = chrom_positions + cumulative_lengths.get(unique_chrom, 0)
 
     # Conditions for plotting
-    solid_mask = (chrom_xpehh_values_no_nan >= susceptible_threshold) | (chrom_xpehh_values_no_nan <= resistant_threshold)
-    faded_mask = ~solid_mask
-    
-    # Plot solid points for values above 5 or below -5
+    solid_mask = (~np.isnan(chrom_xpehh_values)) & ((chrom_xpehh_values >= susceptible_threshold) | (chrom_xpehh_values <= resistant_threshold))
+    faded_mask = (~np.isnan(chrom_xpehh_values)) & ~solid_mask
+    nan_mask = np.isnan(chrom_xpehh_values)  # Find NaN values
+
+    # Plot solid points (highlighted XP-EHH values)
     ax.scatter(adjusted_positions[solid_mask], 
-               chrom_xpehh_values_no_nan[solid_mask], 
+               chrom_xpehh_values[solid_mask], 
                color=chromosome_colours[unique_chrom], alpha=1.0, s=10)
-    
-    # Plot faded points for other values
+
+    # Plot faded points (regular XP-EHH values)
     ax.scatter(adjusted_positions[faded_mask], 
-               chrom_xpehh_values_no_nan[faded_mask], 
+               chrom_xpehh_values[faded_mask], 
                color=chromosome_colours[unique_chrom], alpha=0.1, s=10)
-    
-    # Add patch for the legend
+
+    # Plot NaN values as empty/transparent points (preserving positions)
+    ax.scatter(adjusted_positions[nan_mask], 
+               np.zeros_like(adjusted_positions[nan_mask]), 
+               color='white', alpha=0.0, s=1)
+
+    # Add chromosome to legend
     patch = mpatches.Patch(color=chromosome_colours[unique_chrom], label=unique_chrom)
     legend_patches.append(patch)
 
-# Add significance threshold lines and legend
+# Add threshold lines and legend
 ax.axhline(y=susceptible_threshold, color='black', linestyle='--', label='Susceptible Threshold')
 ax.axhline(y=resistant_threshold, color='black', linestyle='--', label='Resistant Threshold')
 ax.legend(handles=legend_patches, title='Chromosome', bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -196,12 +199,13 @@ ax.set_xlabel('Genomic Position (bp)')
 ax.set_ylabel('XP-EHH')
 plt.tight_layout()
 plt.savefig('xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
+plt.show()
 
 
-# %% Run iterations
+# %% Run permutations where the resistant and susceptible labels are switched between different sample IDs
 
 permuted_xpehh_values = []
-for i in range(20):
+for i in range(5):
     # Get the indices from df_samples
     df_res_sus_samples = df_samples[df_samples.pyrethroid_resistance_status.isin(['resistant', 'susceptible'])]
     indices = df_res_sus_samples.index.tolist()
@@ -253,7 +257,7 @@ fig, ax = plt.subplots(figsize=(10, 6))
 # Ensure that pos, chrom, and xpehh_std are all numpy arrays to support advanced indexing
 pos = np.array(callset['variants/POS'][:])
 chrom = np.array(callset['variants/CHROM'][:])
-xpehh_standardised_iterated_values = np.array(xpehh_std_iterated[0])
+permuted_xpehh_values_all = np.array(permuted_xpehh_values_df[0])
 
 # Define colors for each chromosome (for illustration)
 chromosome_colours = {
@@ -267,47 +271,46 @@ legend_patches = []
 filtered_chroms = ['2', '3', 'anop_X', 'anop_mito']
 
 # Iterate through each chromosome to plot its variants
-for unique_chrom in filtered_chroms:
-    chrom_mask = chrom == unique_chrom
-    
-    chrom_positions = pos[chrom_mask]
-    chrom_xpehh_values = xpehh_standardised_iterated_values[chrom_mask]
-    
-    non_nan_mask = ~np.isnan(chrom_xpehh_values)
-    chrom_positions_no_nan = chrom_positions[non_nan_mask]
-    chrom_xpehh_values_no_nan = chrom_xpehh_values[non_nan_mask]
-    
-    adjusted_positions = chrom_positions_no_nan + cumulative_lengths.get(unique_chrom, 0)
+# Iterate over each of the permuted arrays separately to plot all of the points
+for i, permuted_xpehh_values in enumerate(permuted_xpehh_values_all):
+    for unique_chrom in filtered_chroms:
+        chrom_mask = chrom == unique_chrom
+        
+        chrom_positions = pos[chrom_mask]  # Positions remain fixed
+        chrom_xpehh_values = permuted_xpehh_values[chrom_mask]  # Extract values from current sub-array
+        
+        non_nan_mask = ~np.isnan(chrom_xpehh_values)
+        chrom_positions_no_nan = chrom_positions[non_nan_mask]
+        chrom_xpehh_values_no_nan = chrom_xpehh_values[non_nan_mask]
+        
+        adjusted_positions = chrom_positions_no_nan + cumulative_lengths.get(unique_chrom, 0)
 
-    # Conditions for plotting
-    solid_mask = (chrom_xpehh_values_no_nan >= susceptible_threshold) | (chrom_xpehh_values_no_nan <= resistant_threshold)
-    faded_mask = ~solid_mask
-    
-    # Plot solid points for values above 5 or below -5
-    ax.scatter(adjusted_positions[solid_mask], 
-               chrom_xpehh_values_no_nan[solid_mask], 
-               color=chromosome_colours[unique_chrom], alpha=1.0, s=10)
-    
-    # Plot faded points for other values
-    ax.scatter(adjusted_positions[faded_mask], 
-               chrom_xpehh_values_no_nan[faded_mask], 
-               color=chromosome_colours[unique_chrom], alpha=0.1, s=10)
+        # Apply threshold filters
+        solid_mask = (chrom_xpehh_values_no_nan >= susceptible_threshold) | (chrom_xpehh_values_no_nan <= resistant_threshold)
+        faded_mask = ~solid_mask
+        
+        # Scatter plot for each permutation separately
+        ax.scatter(adjusted_positions[solid_mask], chrom_xpehh_values_no_nan[solid_mask], 
+                   color=chromosome_colours[unique_chrom], alpha=1.0, s=10, label=f"Perm {i+1}" if i == 0 else "")
+        ax.scatter(adjusted_positions[faded_mask], chrom_xpehh_values_no_nan[faded_mask], 
+                   color=chromosome_colours[unique_chrom], alpha=0.1, s=10)
+
 # Set labels
 ax.set_xlabel('Genomic Position (bp)')
 ax.set_ylabel('XP-EHH value')
 plt.tight_layout()
-plt.savefig('permuted_only_xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
+plt.savefig('permuted_xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
 
 #%% ######
-#  Initialize an array to store the 99th percentile and window information
-# Convert permuted XP-EHH values to a NumPy array
-permuted_xpehh_values_array = np.array(permuted_xpehh_values)
 
-# Compute the 99th percentile across permutations for each variant position
-percentile_99th_values = np.nanpercentile(permuted_xpehh_values_array, 99, axis=0)
+# Convert list of arrays into a 2D NumPy array (shape: num_permutations x num_variants)
+permuted_xpehh_values_all_array = np.vstack(permuted_xpehh_values_all)
 
-# Notify of completion
-print("Calculated 99th percentile values for each variant position")
+# Compute the 99th percentile for each variant (ignoring NaNs)
+percentile_99_values = np.nanpercentile(permuted_xpehh_values_all_array, 99, axis=0)
+
+# percentile_99_values now contains the 99th percentile XP-EHH for each variant
+# you can look at it using np.nanmax(percentile_99_values). Need to use np.nanmax to ignore nans, otherwise np.max() would return nan if NaNs are present.
 
 # %% Now compare the actual standardized XpEHH value to the computed 99th percentile
 
