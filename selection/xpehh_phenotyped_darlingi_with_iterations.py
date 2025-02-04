@@ -254,7 +254,7 @@ fig, ax = plt.subplots(figsize=(10, 6))
 # Ensure that pos, chrom, and xpehh_std are all numpy arrays to support advanced indexing
 pos = np.array(callset['variants/POS'][:])
 chrom = np.array(callset['variants/CHROM'][:])
-permuted_xpehh_values_all = np.array(permuted_xpehh_values_df[0])
+permuted_xpehh_values_all = np.array(permuted_xpehh_values_df)
 
 # Define colors for each chromosome (for illustration)
 chromosome_colours = {
@@ -312,7 +312,7 @@ percentile_99_values = np.nanpercentile(permuted_xpehh_values_all_array, 99, axi
 # %% Now compare the actual standardized XpEHH value to the computed 99th percentile
 
 # Identify significant positions
-significant_positions = pos[xpehh_std[0] > percentile_99th_values]
+significant_positions = pos[xpehh_raw > percentile_99th_values]
 
 # Extract corresponding XP-EHH values
 significant_xpehh_values = xpehh_std[0][xpehh_std[0] > percentile_99th_values]
