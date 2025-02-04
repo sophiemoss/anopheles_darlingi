@@ -201,8 +201,8 @@ plt.tight_layout()
 plt.savefig('xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
 plt.show()
 
-
-# %% Run permutations where the resistant and susceptible labels are switched between different sample IDs
+####################### PERMUTATIONS ######################
+# %% Caluclate permutations where the resistant and susceptible labels are switched between different sample IDs
 
 permuted_xpehh_values = []
 for i in range(5):
@@ -235,16 +235,13 @@ for i in range(5):
     xpehh_raw_iterated = allel.xpehh(h_pop1, h_pop2, pos, use_threads=True)
     print(f"Calculated xpehh using allel.xpehh for permutation {i}")
 
-    # Standardize the xpehh values for the iteration
-    xpehh_std_iterated = allel.standardize_by_allele_count(xpehh_raw_iterated, allele_counts_array[:, 1])
-    
-    # Store the standardised xp-ehh values for this iteration
-    permuted_xpehh_values.append((xpehh_std_iterated))
+    # Store the xp-ehh values for this iteration
+    permuted_xpehh_values.append((xpehh_raw_iterated))
 
 # Notify of finishing permutations
 print("Permutations calculated")
 
-#%% 
+#%% Save the permuted Xpehh values as a dataframe and as a csv, so that you do not need to calcualte them again if taking a break in analysis
 permuted_xpehh_values_df = pd.DataFrame(permuted_xpehh_values)
 # Save permuted_xpehh_values as a csv so that you do not need to calculate again if taking a break in analysis
 permuted_xpehh_values_df.to_csv(f'permuted_xpehh_values.csv', index=False)
