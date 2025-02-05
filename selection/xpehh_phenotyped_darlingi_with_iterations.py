@@ -130,7 +130,7 @@ for chrom, length in chromosome_lengths.items():
     cumulative_lengths[chrom] = cumulative_length
     cumulative_length += length
 
-# %% Plot rawXP-EHH
+# %% Plot raw XP-EHH
 
 # Set thresholds
 susceptible_threshold = 5
@@ -298,7 +298,7 @@ ax.set_ylabel('XP-EHH value')
 plt.tight_layout()
 plt.savefig('permuted_xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
 
-#%% ######
+#%% ###### NEED TO ENSURE THAT SIGNIFICANCE IS CORRECT FOR POSITIVES AND NEGATIVES. THIS DOES NOT WORK AS IT JUST GIVES POSITIVES.
 
 # Convert list of arrays into a 2D NumPy array (shape: num_permutations x num_variants)
 permuted_xpehh_values_all_array = np.vstack(permuted_xpehh_values_all)
@@ -309,28 +309,23 @@ percentile_99_values = np.nanpercentile(permuted_xpehh_values_all_array, 99, axi
 # percentile_99_values now contains the 99th percentile XP-EHH for each variant
 # you can look at it using np.nanmax(percentile_99_values). Need to use np.nanmax to ignore nans, otherwise np.max() would return nan if NaNs are present.
 
-# %% Now compare the actual standardized XpEHH value to the computed 99th percentile
+# Now compare the actual standardized XpEHH value to the computed 99th percentile
 
 # Identify significant positions
-significant_positions = pos[xpehh_raw > percentile_99th_values]
+significant_positions = pos[xpehh_raw > percentile_99_values]
 
 # Extract corresponding XP-EHH values
-significant_xpehh_values = xpehh_std[0][xpehh_std[0] > percentile_99th_values]
+significant_xpehh_values = xpehh_raw[xpehh_raw > percentile_99_values]
 
 # Create DataFrame of significant results
 significant_variants_df = pd.DataFrame({
     'Position': significant_positions,
     'XP-EHH': significant_xpehh_values,
-    'Threshold_99th': percentile_99th_values[xpehh_std[0] > percentile_99th_values]
+    'Threshold_99th': percentile_99_values[xpehh_raw > percentile_99_values]
 })
 
 # Save results
 significant_variants_df.to_csv('significant_xpehh_variants.csv', index=False)
-
-# Display to user
-import ace_tools as tools
-tools.display_dataframe_to_user(name="Significant XP-EHH Variants", dataframe=significant_variants_df)
-
 
 # %% Visualise significant variants
 
