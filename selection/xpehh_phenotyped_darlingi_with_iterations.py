@@ -130,7 +130,7 @@ for chrom, length in chromosome_lengths.items():
     cumulative_lengths[chrom] = cumulative_length
     cumulative_length += length
 
-# %% Plot rawXP-EHH
+# %% Plot raw XP-EHH
 
 # Set thresholds
 susceptible_threshold = 5
@@ -201,8 +201,8 @@ plt.tight_layout()
 plt.savefig('xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
 plt.show()
 
-
-# %% Run permutations where the resistant and susceptible labels are switched between different sample IDs
+####################### PERMUTATIONS ######################
+# %% Caluclate permutations where the resistant and susceptible labels are switched between different sample IDs
 
 permuted_xpehh_values = []
 for i in range(5):
@@ -235,16 +235,13 @@ for i in range(5):
     xpehh_raw_iterated = allel.xpehh(h_pop1, h_pop2, pos, use_threads=True)
     print(f"Calculated xpehh using allel.xpehh for permutation {i}")
 
-    # Standardize the xpehh values for the iteration
-    xpehh_std_iterated = allel.standardize_by_allele_count(xpehh_raw_iterated, allele_counts_array[:, 1])
-    
-    # Store the standardised xp-ehh values for this iteration
-    permuted_xpehh_values.append((xpehh_std_iterated))
+    # Store the xp-ehh values for this iteration
+    permuted_xpehh_values.append((xpehh_raw_iterated))
 
 # Notify of finishing permutations
 print("Permutations calculated")
 
-#%% 
+#%% Save the permuted Xpehh values as a dataframe and as a csv, so that you do not need to calcualte them again if taking a break in analysis
 permuted_xpehh_values_df = pd.DataFrame(permuted_xpehh_values)
 # Save permuted_xpehh_values as a csv so that you do not need to calculate again if taking a break in analysis
 permuted_xpehh_values_df.to_csv(f'permuted_xpehh_values.csv', index=False)
@@ -257,7 +254,7 @@ fig, ax = plt.subplots(figsize=(10, 6))
 # Ensure that pos, chrom, and xpehh_std are all numpy arrays to support advanced indexing
 pos = np.array(callset['variants/POS'][:])
 chrom = np.array(callset['variants/CHROM'][:])
-permuted_xpehh_values_all = np.array(permuted_xpehh_values_df[0])
+permuted_xpehh_values_all = np.array(permuted_xpehh_values_df)
 
 # Define colors for each chromosome (for illustration)
 chromosome_colours = {
@@ -301,7 +298,7 @@ ax.set_ylabel('XP-EHH value')
 plt.tight_layout()
 plt.savefig('permuted_xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
 
-#%% ######
+#%% ###### NEED TO ENSURE THAT SIGNIFICANCE IS CORRECT FOR POSITIVES AND NEGATIVES. THIS DOES NOT WORK AS IT JUST GIVES POSITIVES.
 
 # Convert list of arrays into a 2D NumPy array (shape: num_permutations x num_variants)
 permuted_xpehh_values_all_array = np.vstack(permuted_xpehh_values_all)
@@ -312,28 +309,23 @@ percentile_99_values = np.nanpercentile(permuted_xpehh_values_all_array, 99, axi
 # percentile_99_values now contains the 99th percentile XP-EHH for each variant
 # you can look at it using np.nanmax(percentile_99_values). Need to use np.nanmax to ignore nans, otherwise np.max() would return nan if NaNs are present.
 
-# %% Now compare the actual standardized XpEHH value to the computed 99th percentile
+# Now compare the actual standardized XpEHH value to the computed 99th percentile
 
 # Identify significant positions
-significant_positions = pos[xpehh_std[0] > percentile_99th_values]
+significant_positions = pos[xpehh_raw > percentile_99_values]
 
 # Extract corresponding XP-EHH values
-significant_xpehh_values = xpehh_std[0][xpehh_std[0] > percentile_99th_values]
+significant_xpehh_values = xpehh_raw[xpehh_raw > percentile_99_values]
 
 # Create DataFrame of significant results
 significant_variants_df = pd.DataFrame({
     'Position': significant_positions,
     'XP-EHH': significant_xpehh_values,
-    'Threshold_99th': percentile_99th_values[xpehh_std[0] > percentile_99th_values]
+    'Threshold_99th': percentile_99_values[xpehh_raw > percentile_99_values]
 })
 
 # Save results
 significant_variants_df.to_csv('significant_xpehh_variants.csv', index=False)
-
-# Display to user
-import ace_tools as tools
-tools.display_dataframe_to_user(name="Significant XP-EHH Variants", dataframe=significant_variants_df)
-
 
 # %% Visualise significant variants
 
