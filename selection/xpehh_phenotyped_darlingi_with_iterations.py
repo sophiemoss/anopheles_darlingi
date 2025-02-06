@@ -298,7 +298,7 @@ ax.set_ylabel('XP-EHH value')
 plt.tight_layout()
 plt.savefig('permuted_xpehh_plot_600ppi.png', dpi=600)  # Save at 600 PPI
 
-#%% ###### NEED TO ENSURE THAT SIGNIFICANCE IS CORRECT FOR POSITIVES AND NEGATIVES. THIS DOES NOT WORK AS IT JUST GIVES POSITIVES.
+#%% ### NEED TO ENSURE THAT SIGNIFICANCE IS CORRECT FOR POSITIVES AND NEGATIVES. THIS DOES NOT WORK AS IT JUST GIVES POSITIVES.
 
 # Convert list of arrays into a 2D NumPy array (shape: num_permutations x num_variants)
 permuted_xpehh_values_all_array = np.vstack(permuted_xpehh_values_all)
